@@ -39,7 +39,7 @@ ROOT_URLCONF = "config.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -106,3 +106,7 @@ SPECTACULAR_SETTINGS = {
     "DESCRIPTION": "Система регистрации и контроля дефектов",
     "VERSION": "1.0.0",
 }
+
+LOGIN_URL = "login"
+LOGIN_REDIRECT_URL = "projects_list"
+LOGOUT_REDIRECT_URL = "login"

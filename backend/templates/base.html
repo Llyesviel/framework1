@@ -1,0 +1,58 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Defects Control{% endblock %}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="/projects/">Defects</a>
+    <div class="collapse navbar-collapse">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        {% if user.is_authenticated %}
+          {% if user.is_manager %}
+            <li class="nav-item"><a class="nav-link" href="/projects/">Проекты</a></li>
+            <li class="nav-item"><a class="nav-link" href="/defects/">Дефекты</a></li>
+            <li class="nav-item"><a class="nav-link" href="/reports/dashboard/">Отчёты</a></li>
+            <li class="nav-item"><a class="nav-link" href="/api/users/">Пользователи</a></li>
+          {% elif user.is_engineer %}
+            <li class="nav-item"><a class="nav-link" href="/projects/">Мои проекты</a></li>
+            <li class="nav-item"><a class="nav-link" href="/defects/">Мои дефекты</a></li>
+          {% elif user.is_observer %}
+            <li class="nav-item"><a class="nav-link" href="/projects/">Проекты</a></li>
+            <li class="nav-item"><a class="nav-link" href="/defects/">Дефекты</a></li>
+            <li class="nav-item"><a class="nav-link" href="/reports/dashboard/">Отчёты</a></li>
+          {% endif %}
+        {% endif %}
+      </ul>
+      <ul class="navbar-nav">
+        {% if user.is_authenticated %}
+          <li class="nav-item"><a class="nav-link" href="/profile/">{{ user.username }}</a></li>
+          <li class="nav-item"><a class="nav-link" href="/logout/">Выход</a></li>
+        {% else %}
+          <li class="nav-item"><a class="nav-link" href="/login/">Вход</a></li>
+        {% endif %}
+      </ul>
+    </div>
+  </div>
+  </nav>
+
+<div class="container-fluid">
+  {% if messages %}
+    <div class="mt-2">
+      {% for message in messages %}
+        <div class="alert alert-info">{{ message }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+  {% block content %}{% endblock %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Изменить статус{% endblock %}
+{% block content %}
+<div class="container mt-4">
+  <h3>Изменить статус</h3>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button class="btn btn-primary" type="submit">Сохранить</button>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Вложения{% endblock %}
+{% block content %}
+<div class="container mt-4">
+  <h3>Загрузка вложений</h3>
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button class="btn btn-primary" type="submit">Загрузить</button>
+  </form>
+</div>
+{% endblock %}

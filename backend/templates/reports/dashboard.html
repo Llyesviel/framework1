@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Отчёты{% endblock %}
+{% block content %}
+<div class="container mt-4">
+  <h3>Панель отчётов</h3>
+  <div class="row">
+    <div class="col-md-6">
+      <h5>Дефекты по статусам</h5>
+      <canvas id="statusChart"></canvas>
+    </div>
+    <div class="col-md-6">
+      <h5>Дефекты по приоритетам</h5>
+      <canvas id="priorityChart"></canvas>
+    </div>
+  </div>
+</div>
+<script>
+const statusLabels = {{ status_labels|safe }};
+const statusData = {{ status_counts|safe }};
+const priorityLabels = {{ priority_labels|safe }};
+const priorityData = {{ priority_counts|safe }};
+new Chart(document.getElementById('statusChart'), {type:'bar', data:{labels:statusLabels, datasets:[{label:'Статус', data:statusData}]}});
+new Chart(document.getElementById('priorityChart'), {type:'bar', data:{labels:priorityLabels, datasets:[{label:'Приоритет', data:priorityData}]}});
+</script>
+{% endblock %}

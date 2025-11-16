@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Дефект{% endblock %}
+{% block content %}
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center">
+    <h3>{{ defect.title }}</h3>
+    <div>
+      {% if user.is_manager or (user.is_engineer and defect.performer_id == user.id) %}
+        <a class="btn btn-warning" href="/defects/{{ defect.id }}/edit/">Редактировать</a>
+        <a class="btn btn-secondary" href="/defects/{{ defect.id }}/change_status/">Изменить статус</a>
+      {% endif %}
+      {% if not user.is_observer %}
+        <a class="btn btn-info" href="/defects/{{ defect.id }}/attachments/">Вложения</a>
+      {% endif %}
+    </div>
+  </div>
+  <div class="row mt-3">
+    <div class="col-md-6">
+      <table class="table">
+        <tr><th>Проект</th><td>{{ defect.project.title }}</td></tr>
+        <tr><th>Этап</th><td>{% if defect.stage %}{{ defect.stage.title }}{% endif %}</td></tr>
+        <tr><th>Статус</th><td><span class="badge bg-primary">{{ defect.status }}</span></td></tr>
+        <tr><th>Приоритет</th><td>{{ defect.priority }}</td></tr>
+        <tr><th>Исполнитель</th><td>{% if defect.performer %}{{ defect.performer.username }}{% endif %}</td></tr>
+        <tr><th>Срок</th><td>{{ defect.deadline }}</td></tr>
+        <tr><th>Описание</th><td>{{ defect.description }}</td></tr>
+      </table>
+    </div>
+    <div class="col-md-6">
+      <h5>История статусов</h5>
+      <ul class="list-group">
+        {% for h in defect.status_history.all %}
+          <li class="list-group-item">{{ h.changed_at }}: {{ h.old_status }} → {{ h.new_status }} {% if h.changed_by %}({{ h.changed_by.username }}){% endif %}</li>
+        {% empty %}
+          <li class="list-group-item">Нет истории</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+  <div class="row mt-4">
+    <div class="col-md-6">
+      <h5>Комментарии</h5>
+      <ul class="list-group">
+        {% for c in defect.comments.all %}
+          <li class="list-group-item">{{ c.created_at }} — {{ c.author.username }}: {{ c.text }}</li>
+        {% empty %}
+          <li class="list-group-item">Нет комментариев</li>
+        {% endfor %}
+      </ul>
+      {% if not user.is_observer %}
+      <form method="post" class="mt-3">
+        {% csrf_token %}
+        {{ comment_form.as_p }}
+        <button class="btn btn-primary" type="submit">Добавить комментарий</button>
+      </form>
+      {% endif %}
+    </div>
+    <div class="col-md-6">
+      <h5>Вложения</h5>
+      <div class="row">
+        {% for a in defect.attachments.all %}
+        <div class="col-md-4 mb-3">
+          <div class="card">
+            <img src="{{ a.file.url }}" class="card-img-top" onerror="this.style.display='none'">
+            <div class="card-body"><a href="{{ a.file.url }}" target="_blank">Скачать</a></div>
+          </div>
+        </div>
+        {% empty %}
+        <p>Нет вложений</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

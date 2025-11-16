@@ -13,4 +13,8 @@ urlpatterns = [
     path("api/projects/", include("projects.urls")),
     path("api/defects/", include("defects.urls")),
     path("api/reports/", include("reports.urls")),
+    path("", include("users.web_urls")),
+    path("projects/", include("projects.web_urls")),
+    path("defects/", include("defects.web_urls")),
+    path("reports/", include("reports.web_urls")),
 ]

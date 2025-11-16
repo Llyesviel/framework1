@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Отчёт по инженеру{% endblock %}
+{% block content %}
+<div class="container mt-4">
+  <h3>Отчёт по инженеру</h3>
+  <form method="get" class="row g-3">
+    <div class="col-md-4"><input class="form-control" name="engineer_id" placeholder="ID инженера" value="{{ request.GET.engineer_id }}"></div>
+    <div class="col-md-2"><button class="btn btn-outline-primary" type="submit">Показать</button></div>
+  </form>
+  <div class="mt-3">
+    <p>Всего: {{ data.total }}</p>
+    <ul>
+      {% for i in data.by_status %}
+        <li>{{ i.status }}: {{ i.count }}</li>
+      {% empty %}
+        <li>Нет данных</li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+{% endblock %}
