@@ -7,9 +7,9 @@ class Defect(models.Model):
     PRIORITY_MEDIUM = "medium"
     PRIORITY_HIGH = "high"
     PRIORITY_CHOICES = [
-        (PRIORITY_LOW, "low"),
-        (PRIORITY_MEDIUM, "medium"),
-        (PRIORITY_HIGH, "high"),
+        (PRIORITY_LOW, "низкий"),
+        (PRIORITY_MEDIUM, "средний"),
+        (PRIORITY_HIGH, "высокий"),
     ]
 
     STATUS_NEW = "new"
@@ -18,11 +18,11 @@ class Defect(models.Model):
     STATUS_CLOSED = "closed"
     STATUS_CANCELLED = "cancelled"
     STATUS_CHOICES = [
-        (STATUS_NEW, "new"),
-        (STATUS_IN_PROGRESS, "in_progress"),
-        (STATUS_REVIEW, "review"),
-        (STATUS_CLOSED, "closed"),
-        (STATUS_CANCELLED, "cancelled"),
+        (STATUS_NEW, "новый"),
+        (STATUS_IN_PROGRESS, "в работе"),
+        (STATUS_REVIEW, "на проверке"),
+        (STATUS_CLOSED, "закрыт"),
+        (STATUS_CANCELLED, "отменён"),
     ]
 
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="defects")

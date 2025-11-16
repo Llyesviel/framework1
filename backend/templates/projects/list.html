@@ -23,9 +23,9 @@
       {% for p in projects %}
       <tr>
         <td>{{ p.title }}</td>
-        <td>{{ p.status }}</td>
-        <td>{{ p.start_date }}</td>
-        <td>{{ p.end_date }}</td>
+        <td>{{ p.get_status_display }}</td>
+        <td>{{ p.start_date|default:"не задано" }}</td>
+        <td>{{ p.end_date|default:"не задано" }}</td>
         <td>{{ p.defects_count }}</td>
         <td><a class="btn btn-outline-primary btn-sm" href="/projects/{{ p.id }}/">Открыть</a></td>
       </tr>

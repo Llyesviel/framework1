@@ -5,8 +5,8 @@ class Project(models.Model):
     STATUS_ACTIVE = "active"
     STATUS_CLOSED = "closed"
     STATUS_CHOICES = [
-        (STATUS_ACTIVE, "active"),
-        (STATUS_CLOSED, "closed"),
+        (STATUS_ACTIVE, "активен"),
+        (STATUS_CLOSED, "закрыт"),
     ]
 
     title = models.CharField(max_length=255)

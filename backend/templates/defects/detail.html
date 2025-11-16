@@ -5,12 +5,17 @@
   <div class="d-flex justify-content-between align-items-center">
     <h3>{{ defect.title }}</h3>
     <div>
-      {% if user.is_manager or (user.is_engineer and defect.performer_id == user.id) %}
-        <a class="btn btn-warning" href="/defects/{{ defect.id }}/edit/">Редактировать</a>
-        <a class="btn btn-secondary" href="/defects/{{ defect.id }}/change_status/">Изменить статус</a>
-      {% endif %}
-      {% if not user.is_observer %}
-        <a class="btn btn-info" href="/defects/{{ defect.id }}/attachments/">Вложения</a>
+      {% if user.is_authenticated %}
+        {% if user.is_manager %}
+          <a class="btn btn-warning" href="/defects/{{ defect.id }}/edit/">Редактировать</a>
+          <a class="btn btn-secondary" href="/defects/{{ defect.id }}/change_status/">Изменить статус</a>
+        {% elif user.is_engineer and defect.performer_id == user.id %}
+          <a class="btn btn-warning" href="/defects/{{ defect.id }}/edit/">Редактировать</a>
+          <a class="btn btn-secondary" href="/defects/{{ defect.id }}/change_status/">Изменить статус</a>
+        {% endif %}
+        {% if not user.is_observer %}
+          <a class="btn btn-info" href="/defects/{{ defect.id }}/attachments/">Вложения</a>
+        {% endif %}
       {% endif %}
     </div>
   </div>
@@ -19,8 +24,8 @@
       <table class="table">
         <tr><th>Проект</th><td>{{ defect.project.title }}</td></tr>
         <tr><th>Этап</th><td>{% if defect.stage %}{{ defect.stage.title }}{% endif %}</td></tr>
-        <tr><th>Статус</th><td><span class="badge bg-primary">{{ defect.status }}</span></td></tr>
-        <tr><th>Приоритет</th><td>{{ defect.priority }}</td></tr>
+        <tr><th>Статус</th><td><span class="badge bg-primary">{{ defect.get_status_display }}</span></td></tr>
+        <tr><th>Приоритет</th><td>{{ defect.get_priority_display }}</td></tr>
         <tr><th>Исполнитель</th><td>{% if defect.performer %}{{ defect.performer.username }}{% endif %}</td></tr>
         <tr><th>Срок</th><td>{{ defect.deadline }}</td></tr>
         <tr><th>Описание</th><td>{{ defect.description }}</td></tr>

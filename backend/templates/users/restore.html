@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block header %}{% endblock %}
+{% block title %}Восстановление доступа{% endblock %}
+{% block content %}
+<div class="container" style="min-height: calc(100vh - 56px); display:flex; align-items:center;">
+  <div class="row w-100 justify-content-center">
+    <div class="col-md-6">
+      <div class="p-4 bg-white" style="border-radius:16px; box-shadow:0 10px 20px rgba(0,0,0,0.08);">
+        <h3 style="color:#2b2f33;">Восстановление доступа</h3>
+        <p style="color:#6c757d;">Обратитесь к администратору системы для восстановления данных.</p>
+        <a class="btn btn-lg" href="/login/" style="background:linear-gradient(90deg,#ff7a29,#ff9933); color:#fff; border:none;">Вернуться ко входу</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

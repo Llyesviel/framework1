@@ -13,11 +13,21 @@ class DefectForm(forms.ModelForm):
             "priority": forms.Select(attrs={"class": "form-select"}),
             "status": forms.Select(attrs={"class": "form-select"}),
             "performer": forms.Select(attrs={"class": "form-select"}),
-            "deadline": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
+            "deadline": forms.DateInput(format="%Y-%m-%d", attrs={"type": "date", "class": "form-control"}),
+        }
+        labels = {
+            "project": "Проект",
+            "stage": "Этап",
+            "title": "Название",
+            "description": "Описание",
+            "priority": "Приоритет",
+            "status": "Статус",
+            "performer": "Исполнитель",
+            "deadline": "Срок выполнения",
         }
 
 class DefectStatusForm(forms.Form):
-    status = forms.ChoiceField(choices=Defect.STATUS_CHOICES, widget=forms.Select(attrs={"class": "form-select"}))
+    status = forms.ChoiceField(label="Статус", choices=Defect.STATUS_CHOICES, widget=forms.Select(attrs={"class": "form-select"}))
 
 class AttachmentForm(forms.ModelForm):
     class Meta:
@@ -26,6 +36,7 @@ class AttachmentForm(forms.ModelForm):
         widgets = {
             "file": forms.ClearableFileInput(attrs={"class": "form-control"}),
         }
+        labels = {"file": "Файл"}
 
 class CommentForm(forms.ModelForm):
     class Meta:
@@ -34,3 +45,4 @@ class CommentForm(forms.ModelForm):
         widgets = {
             "text": forms.Textarea(attrs={"class": "form-control"}),
         }
+        labels = {"text": "Комментарий"}

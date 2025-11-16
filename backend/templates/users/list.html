@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Пользователи{% endblock %}
+{% block content %}
+<div class="container mt-4">
+  <h3>Пользователи</h3>
+  <table class="table table-striped">
+    <thead><tr><th>Логин</th><th>Email</th><th>Роль</th></tr></thead>
+    <tbody>
+      {% for u in users %}
+      <tr>
+        <td>{{ u.username }}</td>
+        <td>{{ u.email }}</td>
+        <td>{% if u.is_superuser %}админ{% elif u.role == 'manager' %}менеджер{% elif u.role == 'engineer' %}инженер{% else %}наблюдатель{% endif %}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="3">Нет пользователей</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

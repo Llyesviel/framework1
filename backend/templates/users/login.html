@@ -1,22 +1,79 @@
 {% extends "base.html" %}
-{% block title %}Вход{% endblock %}
+{% load form_extras %}
+{% block header %}{% endblock %}
+{% block title %}Вход в аккаунт{% endblock %}
 {% block content %}
-<div class="row justify-content-center mt-5">
-  <div class="col-md-4">
-    <h3>Вход</h3>
-    <form method="post">
-      {% csrf_token %}
-      {{ form.non_field_errors }}
-      <div class="mb-3">
-        <label class="form-label">Имя пользователя</label>
-        {{ form.username }}
+<style>
+  body { background:#f5f6f8; }
+  .login-wrapper { min-height: calc(100vh - 56px); display:flex; align-items:center; }
+  .login-card { background:#fff; border-radius:16px; box-shadow:0 10px 20px rgba(0,0,0,0.08); }
+  .login-left { border-radius:16px 0 0 16px; color:#fff; position:relative; overflow:hidden; }
+  .login-left .overlay-text { position:relative; z-index:2; padding:2rem; }
+  .logo-circle { width:64px; height:64px; border-radius:16px; display:flex; align-items:center; justify-content:center; background:#fff; box-shadow:0 6px 12px rgba(0,0,0,0.08); margin:0 auto 1rem; padding:0; }
+  .login-title { font-weight:600; font-size:1.8rem; text-align:center; color:#2b2f33; }
+  .login-sub { text-align:center; color:#8a9096; margin-bottom:1rem; }
+  .form-label { color:#7f868d; }
+  .btn-gradient { background:linear-gradient(90deg,#ff7a29,#ff9933); border:none; color:#fff; font-weight:600; font-size:0.95rem; }
+  .btn-gradient:hover { filter:brightness(0.95); color:#fff !important; }
+  .form-label { font-weight:400; }
+  .overlay-text-inner { width:95%; margin-left:0.5rem; }
+  .overlay-text-inner h2 { text-align:left; font-size:2.2rem; }
+</style>
+
+<div class="container login-wrapper">
+  <div class="row w-100 justify-content-center">
+    <div class="col-lg-10 col-xl-8">
+      <div class="row login-card">
+        <div class="col-md-6 login-left p-4">
+          <div id="vanta-bg" style="position:absolute; inset:0; z-index:1;"></div>
+          <div class="overlay-text d-flex align-items-center justify-content-center" style="height:100%;">
+            <div class="overlay-text-inner">
+              <h2 style="font-weight:800; text-shadow:0 4px 8px rgba(0,0,0,0.25);">Среда для управления<br>строительными объектами</h2>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6 p-4 p-md-5">
+          <div class="logo-circle">
+            <img src="/media/block.png" alt="Логотип" style="width:64px; height:64px; display:block;">
+          </div>
+          <div class="login-title">Добро пожаловать</div>
+          <div class="login-sub">Введите данные для входа</div>
+          <form method="post" class="mt-3">
+            {% csrf_token %}
+            {{ form.non_field_errors }}
+            <div class="mb-3">
+              <label class="form-label">Имя пользователя</label>
+              {{ form.username|add_class:"form-control" }}
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Пароль</label>
+              {{ form.password|add_class:"form-control" }}
+            </div>
+            <button class="btn btn-gradient btn-lg w-100" type="submit">Войти в аккаунт</button>
+          </form>
+          <div class="text-center mt-3"><small style="color:#2b2f33;">Забыли пароль? <a href="/restore/" style="color:#ff7a29; font-weight:600; text-decoration:underline;">Восстановить</a></small></div>
+        </div>
       </div>
-      <div class="mb-3">
-        <label class="form-label">Пароль</label>
-        {{ form.password }}
-      </div>
-      <button class="btn btn-primary" type="submit">Войти</button>
-    </form>
+    </div>
   </div>
-  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.cells.min.js"></script>
+<script>
+  VANTA.CELLS({
+    el: "#vanta-bg",
+    mouseControls: true,
+    touchControls: true,
+    gyroControls: false,
+    minHeight: 200.00,
+    minWidth: 200.00,
+    scale: 1.00,
+    color1: 0xf76500,
+    color2: 0x985d09,
+    size: 1.80,
+    speed: 1.40
+  })
+  
+</script>
 {% endblock %}

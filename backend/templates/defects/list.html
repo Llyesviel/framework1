@@ -10,8 +10,24 @@
   </div>
   <form method="get" class="row g-3 mt-2">
     <div class="col-md-3"><input class="form-control" name="q" placeholder="Поиск" value="{{ request.GET.q }}"></div>
-    <div class="col-md-2"><select class="form-select" name="status"><option value="">Статус</option><option value="new">new</option><option value="in_progress">in_progress</option><option value="review">review</option><option value="closed">closed</option><option value="cancelled">cancelled</option></select></div>
-    <div class="col-md-2"><select class="form-select" name="priority"><option value="">Приоритет</option><option value="low">low</option><option value="medium">medium</option><option value="high">high</option></select></div>
+    <div class="col-md-2">
+      <select class="form-select" name="status">
+        <option value="">Статус</option>
+        <option value="new">новый</option>
+        <option value="in_progress">в работе</option>
+        <option value="review">на проверке</option>
+        <option value="closed">закрыт</option>
+        <option value="cancelled">отменён</option>
+      </select>
+    </div>
+    <div class="col-md-2">
+      <select class="form-select" name="priority">
+        <option value="">Приоритет</option>
+        <option value="low">низкий</option>
+        <option value="medium">средний</option>
+        <option value="high">высокий</option>
+      </select>
+    </div>
     <div class="col-md-2"><button class="btn btn-outline-primary" type="submit">Фильтр</button></div>
   </form>
   <table class="table table-striped mt-3">
@@ -31,10 +47,10 @@
       <tr>
         <td>{{ d.project.title }}</td>
         <td>{{ d.title }}</td>
-        <td><span class="badge bg-secondary">{{ d.status }}</span></td>
-        <td>{{ d.priority }}</td>
+        <td><span class="badge bg-secondary">{{ d.get_status_display }}</span></td>
+        <td>{{ d.get_priority_display }}</td>
         <td>{% if d.performer %}{{ d.performer.username }}{% endif %}</td>
-        <td>{{ d.deadline }}</td>
+        <td>{{ d.deadline|default:"не задано" }}</td>
         <td><a class="btn btn-outline-primary btn-sm" href="/defects/{{ d.id }}/">Открыть</a></td>
       </tr>
       {% empty %}

@@ -11,9 +11,9 @@
   <div class="row mt-3">
     <div class="col-md-6">
       <table class="table">
-        <tr><th>Статус</th><td>{{ project.status }}</td></tr>
-        <tr><th>Начало</th><td>{{ project.start_date }}</td></tr>
-        <tr><th>Окончание</th><td>{{ project.end_date }}</td></tr>
+        <tr><th>Статус</th><td>{{ project.get_status_display }}</td></tr>
+        <tr><th>Дата начала</th><td>{{ project.start_date|default:"не задано" }}</td></tr>
+        <tr><th>Дата окончания</th><td>{{ project.end_date|default:"не задано" }}</td></tr>
         <tr><th>Описание</th><td>{{ project.description }}</td></tr>
       </table>
     </div>
