@@ -1,0 +1,59 @@
+[
+  {
+    "model": "users.user",
+    "pk": 1,
+    "fields": {
+      "username": "manager",
+      "email": "manager@example.com",
+      "is_active": true,
+      "is_staff": true,
+      "is_superuser": false,
+      "role": "manager",
+      "password": "pbkdf2_sha256$600000$demo$z5b7qP7Rr7zKcn9QKQ=="
+    }
+  },
+  {
+    "model": "users.user",
+    "pk": 2,
+    "fields": {
+      "username": "engineer",
+      "email": "engineer@example.com",
+      "is_active": true,
+      "is_staff": false,
+      "is_superuser": false,
+      "role": "engineer",
+      "password": "pbkdf2_sha256$600000$demo$z5b7qP7Rr7zKcn9QKQ=="
+    }
+  },
+  {
+    "model": "users.user",
+    "pk": 3,
+    "fields": {
+      "username": "observer",
+      "email": "observer@example.com",
+      "is_active": true,
+      "is_staff": false,
+      "is_superuser": false,
+      "role": "observer",
+      "password": "pbkdf2_sha256$600000$demo$z5b7qP7Rr7zKcn9QKQ=="
+    }
+  },
+  {
+    "model": "projects.project",
+    "pk": 1,
+    "fields": {
+      "title": "Demo Project",
+      "description": "",
+      "status": "active"
+    }
+  },
+  {
+    "model": "projects.stage",
+    "pk": 1,
+    "fields": {
+      "project": 1,
+      "title": "Phase 1",
+      "description": ""
+    }
+  }
+]
