@@ -4,6 +4,7 @@ from django.http import HttpResponse
 from users.models import User
 from users.permissions import IsManager
 from .analytics import summary, by_project, by_engineer
+from .analytics import by_day_projects, by_day_defects
 import csv
 
 class ManagerRequiredMixin:
@@ -23,6 +24,12 @@ class ReportDashboardView(LoginRequiredMixin, TemplateView):
         ctx["status_counts"] = [i["count"] for i in s["by_status"]]
         ctx["priority_labels"] = [i["priority"] for i in s["by_priority"]]
         ctx["priority_counts"] = [i["count"] for i in s["by_priority"]]
+        dp = by_day_projects(7)
+        dd = by_day_defects(7)
+        # Prefer labels from projects (should match defects range)
+        ctx["daily_labels"] = dp["labels"]
+        ctx["daily_projects"] = dp["counts"]
+        ctx["daily_defects"] = dd["counts"]
         return ctx
 
 class ReportExportView(ManagerRequiredMixin, TemplateView):

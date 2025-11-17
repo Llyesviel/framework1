@@ -1,6 +1,13 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, FormView, DeleteView
+from django.views import View
 from django.urls import reverse_lazy
+from django.contrib import messages
+from django.contrib.admin.models import LogEntry, ADDITION, CHANGE, DELETION
+from django.contrib.contenttypes.models import ContentType
+from django.utils import timezone
+from django.http import HttpResponse
+import csv
 from django.shortcuts import redirect
 from django.db.models import Q
 from .models import Defect, Attachment, Comment
@@ -45,6 +52,28 @@ class DefectListView(LoginRequiredMixin, RoleMixin, ListView):
         if search:
             qs = qs.filter(Q(title__icontains=search) | Q(description__icontains=search))
         return qs.order_by("-created_at")
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        try:
+            ct = ContentType.objects.get_for_model(Defect)
+            entries = (
+                LogEntry.objects.filter(content_type_id=ct.id)
+                .order_by("-action_time")[:10]
+            )
+            action_map = {1: "создан дефект", 2: "отредактирован дефект", 3: "удалён дефект"}
+            recent = [
+                {
+                    "time": timezone.localtime(e.action_time).strftime("%H:%M"),
+                    "ts": int(e.action_time.timestamp()),
+                    "text": f"{action_map.get(e.action_flag, 'действие')} {e.object_repr}",
+                }
+                for e in entries
+            ]
+            ctx["recent_actions"] = recent
+        except Exception:
+            ctx["recent_actions"] = []
+        return ctx
 
 class DefectDetailView(LoginRequiredMixin, RoleMixin, DetailView):
     model = Defect
@@ -91,6 +120,15 @@ class DefectCreateView(LoginRequiredMixin, RoleMixin, CreateView):
         file = self.request.FILES.get("attachments")
         if file:
             Attachment.objects.create(defect=self.object, file=file)
+        LogEntry.objects.log_action(
+            user_id=self.request.user.pk,
+            content_type_id=ContentType.objects.get_for_model(Defect).pk,
+            object_id=self.object.pk,
+            object_repr=str(self.object),
+            action_flag=ADDITION,
+            change_message="created",
+        )
+        messages.success(self.request, "Дефект успешно создан")
         from django.shortcuts import redirect
         return redirect(self.get_success_url())
 
@@ -123,6 +161,15 @@ class DefectUpdateView(LoginRequiredMixin, RoleMixin, UpdateView):
         file = self.request.FILES.get("attachments")
         if file:
             Attachment.objects.create(defect=self.object, file=file)
+        LogEntry.objects.log_action(
+            user_id=self.request.user.pk,
+            content_type_id=ContentType.objects.get_for_model(Defect).pk,
+            object_id=self.object.pk,
+            object_repr=str(self.object),
+            action_flag=CHANGE,
+            change_message="updated",
+        )
+        messages.success(self.request, "Дефект успешно сохранён")
         from django.shortcuts import redirect
         return redirect(self.get_success_url())
 
@@ -189,3 +236,129 @@ class DefectDeleteView(LoginRequiredMixin, RoleMixin, DeleteView):
             from django.http import HttpResponseForbidden
             return HttpResponseForbidden()
         return super().dispatch(request, *args, **kwargs)
+
+    def delete(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        obj_pk = self.object.pk
+        obj_repr = str(self.object)
+        ct_id = ContentType.objects.get_for_model(Defect).pk
+        response = super().delete(request, *args, **kwargs)
+        LogEntry.objects.log_action(
+            user_id=request.user.pk,
+            content_type_id=ct_id,
+            object_id=obj_pk,
+            object_repr=obj_repr,
+            action_flag=DELETION,
+            change_message="deleted",
+        )
+        messages.success(request, "Дефект удалён")
+        return response
+
+class DefectExportMixin(RoleMixin):
+    def build_queryset(self, request):
+        qs = Defect.objects.select_related("project", "stage", "performer")
+        user = request.user
+        project_id = request.GET.get("project")
+        status = request.GET.get("status")
+        performer_id = request.GET.get("performer")
+        priority = request.GET.get("priority")
+        search = request.GET.get("q")
+        if user.is_manager:
+            pass
+        elif user.is_engineer:
+            qs = qs.filter(Q(project__members=user) | Q(performer=user))
+        if project_id:
+            qs = qs.filter(project_id=project_id)
+        if status:
+            qs = qs.filter(status=status)
+        if performer_id:
+            qs = qs.filter(performer_id=performer_id)
+        if priority:
+            qs = qs.filter(priority=priority)
+        if search:
+            qs = qs.filter(Q(title__icontains=search) | Q(description__icontains=search))
+        return qs.order_by("-created_at")
+
+class DefectsExportCSVView(LoginRequiredMixin, DefectExportMixin, View):
+    def get(self, request):
+        qs = self.build_queryset(request)
+        resp = HttpResponse(content_type="text/csv; charset=utf-8")
+        resp["Content-Disposition"] = "attachment; filename=defects.csv"
+        resp.write("\ufeff")  # UTF-8 BOM for Excel
+        writer = csv.writer(resp, delimiter=';')
+        writer.writerow(["Проект", "Название", "Статус", "Приоритет", "Исполнитель", "Срок"]) 
+        for d in qs:
+            writer.writerow([
+                d.project.title,
+                d.title,
+                d.get_status_display(),
+                d.get_priority_display(),
+                (d.performer.username if d.performer else ""),
+                (d.deadline.isoformat() if d.deadline else ""),
+            ])
+        return resp
+
+class DefectsExportExcelView(LoginRequiredMixin, DefectExportMixin, View):
+    def get(self, request):
+        qs = self.build_queryset(request)
+        resp = HttpResponse(content_type="application/vnd.ms-excel")
+        resp["Content-Disposition"] = "attachment; filename=defects.xls"
+        resp.write("\ufeff")  # UTF-8 BOM for Excel
+        writer = csv.writer(resp, delimiter=';')
+        writer.writerow(["Проект", "Название", "Статус", "Приоритет", "Исполнитель", "Срок"]) 
+        for d in qs:
+            writer.writerow([
+                d.project.title,
+                d.title,
+                d.get_status_display(),
+                d.get_priority_display(),
+                (d.performer.username if d.performer else ""),
+                (d.deadline.isoformat() if d.deadline else ""),
+            ])
+        return resp
+
+class DefectExportCSVView(LoginRequiredMixin, View):
+    def get(self, request, pk):
+        d = Defect.objects.select_related("project", "performer", "stage").get(pk=pk)
+        resp = HttpResponse(content_type="text/csv; charset=utf-8")
+        resp["Content-Disposition"] = f"attachment; filename=defect_{pk}.csv"
+        resp.write("\ufeff")
+        writer = csv.writer(resp, delimiter=';')
+        writer.writerow(["Проект", "Название", "Статус", "Приоритет", "Исполнитель", "Срок", "Этап", "Создан", "Описание", "Вложений", "Комментариев"])
+        writer.writerow([
+            d.project.title,
+            d.title,
+            d.get_status_display(),
+            d.get_priority_display(),
+            (d.performer.username if d.performer else ""),
+            (d.deadline.isoformat() if d.deadline else ""),
+            (d.stage.title if d.stage else ""),
+            (d.created_at.isoformat() if hasattr(d, 'created_at') and d.created_at else ""),
+            (d.description or ""),
+            d.attachments.count(),
+            d.comments.count(),
+        ])
+        return resp
+
+class DefectExportExcelView(LoginRequiredMixin, View):
+    def get(self, request, pk):
+        d = Defect.objects.select_related("project", "performer", "stage").get(pk=pk)
+        resp = HttpResponse(content_type="application/vnd.ms-excel")
+        resp["Content-Disposition"] = f"attachment; filename=defect_{pk}.xls"
+        resp.write("\ufeff")
+        writer = csv.writer(resp, delimiter=';')
+        writer.writerow(["Проект", "Название", "Статус", "Приоритет", "Исполнитель", "Срок", "Этап", "Создан", "Описание", "Вложений", "Комментариев"])
+        writer.writerow([
+            d.project.title,
+            d.title,
+            d.get_status_display(),
+            d.get_priority_display(),
+            (d.performer.username if d.performer else ""),
+            (d.deadline.isoformat() if d.deadline else ""),
+            (d.stage.title if d.stage else ""),
+            (d.created_at.isoformat() if hasattr(d, 'created_at') and d.created_at else ""),
+            (d.description or ""),
+            d.attachments.count(),
+            d.comments.count(),
+        ])
+        return resp

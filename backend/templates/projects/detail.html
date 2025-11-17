@@ -38,6 +38,10 @@
     {% endif %}
   </div>
   <div class="detail-body">
+    <div class="actions" style="margin-bottom:12px;">
+      <a class="action-btn action-orange" href="/projects/{{ project.id }}/export/csv/"><span class="text">Экспорт проекта CSV</span></a>
+      <a class="action-btn action-gray" href="/projects/{{ project.id }}/export/xls/"><span class="text">Экспорт проекта Excel</span></a>
+    </div>
     <table class="info-table">
       <tr><th>Статус</th><td>{{ project.get_status_display }}</td></tr>
       <tr><th>Дата начала</th><td>{{ project.start_date|default:"не задано" }}</td></tr>

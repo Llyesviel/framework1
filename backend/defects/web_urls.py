@@ -8,6 +8,10 @@ from .web_views import (
     AttachmentUploadView,
     DefectAssignView,
     DefectDeleteView,
+    DefectsExportCSVView,
+    DefectsExportExcelView,
+    DefectExportCSVView,
+    DefectExportExcelView,
 )
 
 urlpatterns = [
@@ -19,4 +23,8 @@ urlpatterns = [
     path("<int:pk>/attachments/", AttachmentUploadView.as_view(), name="defect_upload_attachments"),
     path("<int:pk>/assign/", DefectAssignView.as_view(), name="defect_assign"),
     path("<int:pk>/delete/", DefectDeleteView.as_view(), name="defect_delete"),
+    path("export/csv/", DefectsExportCSVView.as_view(), name="defects_export_csv"),
+    path("export/xls/", DefectsExportExcelView.as_view(), name="defects_export_xls"),
+    path("<int:pk>/export/csv/", DefectExportCSVView.as_view(), name="defect_export_csv"),
+    path("<int:pk>/export/xls/", DefectExportExcelView.as_view(), name="defect_export_xls"),
 ]

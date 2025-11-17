@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load tz %}
 {% block title %}Дефект{% endblock %}
-{% block topbar %}{% endblock %}
+{% block page_title %}Дефекты{% endblock %}
 {% block content %}
 <style>
   .detail-wrap { max-width: 900px; margin: 24px 48px; background:#fff; border-radius:16px; box-shadow:0 10px 20px rgba(0,0,0,0.08); }
@@ -22,7 +22,9 @@
 <div class="detail-wrap">
   <div class="detail-head">
     <h3 class="detail-title">{{ defect.title }}</h3>
-    <div class="actions">
+  </div>
+  <div class="detail-body">
+    <div class="actions" style="margin-bottom:12px;">
       {% if user.is_authenticated %}
         {% if user.is_manager %}
           <a class="action-btn action-gray" href="/defects/{{ defect.id }}/edit/"><span class="text">Редактировать</span></a>
@@ -38,8 +40,6 @@
         {% endif %}
       {% endif %}
     </div>
-  </div>
-  <div class="detail-body">
     <table class="info-table">
       <tr><th>Проект</th><td>{{ defect.project.title }}</td></tr>
       <tr><th>Этап</th><td class="muted">{% if defect.stage %}{{ defect.stage.title }}{% endif %}</td></tr>
@@ -84,6 +84,10 @@
       {% empty %}
       <p class="muted">Нет вложений</p>
       {% endfor %}
+    </div>
+    <div class="actions" style="margin-top:12px;">
+      <a class="action-btn action-orange" href="/defects/{{ defect.id }}/export/csv/"><span class="text">Экспорт дефекта CSV</span></a>
+      <a class="action-btn action-gray" href="/defects/{{ defect.id }}/export/xls/"><span class="text">Экспорт дефекта Excel</span></a>
     </div>
   </div>
 </div>

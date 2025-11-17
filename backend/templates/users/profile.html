@@ -1,14 +1,64 @@
 {% extends "base.html" %}
 {% block title %}Профиль{% endblock %}
+{% block page_title %}Профиль{% endblock %}
 {% block content %}
-<div class="container mt-4">
-  <h3>Профиль</h3>
-  <table class="table">
-    <tr><th>Пользователь</th><td>{{ user.username }}</td></tr>
-    <tr><th>Email</th><td>{{ user.email }}</td></tr>
-    <tr><th>Роль</th><td>{% if user.is_superuser %}админ{% elif user.role == 'manager' %}менеджер{% elif user.role == 'engineer' %}инженер{% else %}наблюдатель{% endif %}</td></tr>
-    <tr><th>Имя</th><td>{{ user.first_name }}</td></tr>
-    <tr><th>Фамилия</th><td>{{ user.last_name }}</td></tr>
-  </table>
+<style>
+  .profile-wrap { max-width:720px; margin:24px 48px; }
+  .card { background:#fff; border-radius:16px; box-shadow:0 10px 20px rgba(0,0,0,0.08); overflow:hidden; }
+  .card-head { padding:16px; border-bottom:1px solid #f0f0f0; background:#fff7f0; }
+  .card-head .label { font-size:12px; color:#ffa76a; text-transform:uppercase; letter-spacing:.03em; }
+  .card-head .title { margin:6px 0 0; font-weight:700; color:#ff8a2f; }
+  .card-body { padding:12px 16px; }
+  .row { margin:14px 0; }
+  .row .label { color:#8a9096; font-weight:600; margin-bottom:8px; }
+  .row .value-box { background:#fff7f0; border:1px solid #ff8a2f; border-radius:10px; padding:8px 10px; text-align:left; color:#555f6d; }
+  .value-input { border:1px solid #ddd; border-radius:10px; padding:10px 12px; width:100%; }
+  .value-input:focus { outline:none; border-color: rgba(247,127,0,0.55); box-shadow: 0 0 0 4px rgba(247,127,0,0.14); }
+  .actions { display:flex; gap:8px; padding:16px; border-top:1px solid #f0f0f0; }
+  .btn { background-color: transparent; color: #ff8a2f; height: 2.2em; border: 1px solid #ff8a2f; border-radius: 10px; transition: all 0.4s ease; display:inline-flex; align-items:center; gap:8px; padding: 0 0.9em; text-decoration:none; }
+  .btn:hover { background-color: #ff8a2f; color:#fff; border-radius:8px; }
+  .btn-gray { color:#8a9096; border-color:#8a9096; }
+  .btn-gray:hover { background-color:#8a9096; color:#fff; }
+  .topbar-wrap { max-width: 720px; }
+</style>
+<div class="profile-wrap">
+  <div class="card">
+    <div class="card-head">
+      <div class="label">В системе как</div>
+      <div class="title">{% if user.role == 'manager' %}Менеджер{% elif user.role == 'engineer' %}Инженер{% elif user.role == 'observer' %}Наблюдатель{% else %}Администратор{% endif %}</div>
+    </div>
+    <div class="card-body">
+      {% if edit_mode and form %}
+      <form method="post">
+        {% csrf_token %}
+        <div class="row"><div class="label">Логин</div><div class="value-box">{{ form.username }}</div></div>
+        <div class="row"><div class="label">Email</div><div class="value-box">{{ form.email }}</div></div>
+        {% if form.role %}
+        <div class="row"><div class="label">Роль</div><div class="value-box">{{ form.role }}</div></div>
+        {% else %}
+        <div class="row"><div class="label">Роль</div><div class="value-box">{% if user.role == 'manager' %}менеджер{% elif user.role == 'engineer' %}инженер{% elif user.role == 'observer' %}наблюдатель{% else %}администратор{% endif %}</div></div>
+        {% endif %}
+        <div class="row"><div class="label">Имя</div><div class="value-box">{{ form.first_name }}</div></div>
+        <div class="row"><div class="label">Фамилия</div><div class="value-box">{{ form.last_name }}</div></div>
+        <div style="display:flex; gap:8px; margin-top:12px;">
+          <button class="btn" type="submit">Сохранить</button>
+          <a class="btn btn-gray" href="/profile/">Отмена</a>
+        </div>
+      </form>
+      {% else %}
+        <div class="row"><div class="label">Логин</div><div class="value-box">{{ user.username }}</div></div>
+        <div class="row"><div class="label">Email</div><div class="value-box">{{ user.email|default:"не указан" }}</div></div>
+        <div class="row"><div class="label">Роль</div><div class="value-box">{% if user.role == 'manager' %}менеджер{% elif user.role == 'engineer' %}инженер{% elif user.role == 'observer' %}наблюдатель{% else %}администратор{% endif %}</div></div>
+        <div class="row"><div class="label">Имя</div><div class="value-box">{{ user.first_name|default:"не указано" }}</div></div>
+        <div class="row"><div class="label">Фамилия</div><div class="value-box">{{ user.last_name|default:"не указана" }}</div></div>
+        <div class="row"><div class="label">Дата регистрации</div><div class="value-box">{{ user.date_joined|date:"d.m.Y"|default:"нет" }}</div></div>
+      {% endif %}
+    </div>
+    <div class="actions">
+      <a class="btn" href="/profile/edit/">Редактировать</a>
+      <a class="btn" href="/change_password/">Сменить пароль</a>
+      <a class="btn btn-gray" href="/logout/">Выход</a>
+    </div>
+  </div>
 </div>
 {% endblock %}

@@ -1,17 +1,25 @@
 {% extends "base.html" %}
 {% block title %}Отчёты{% endblock %}
+{% block page_title %}Отчёты{% endblock %}
 {% block content %}
-<div class="container mt-4">
-  <h3>Панель отчётов</h3>
-  <div class="row">
-    <div class="col-md-6">
-      <h5>Дефекты по статусам</h5>
-      <canvas id="statusChart"></canvas>
-    </div>
-    <div class="col-md-6">
-      <h5>Дефекты по приоритетам</h5>
-      <canvas id="priorityChart"></canvas>
-    </div>
+<style>
+  .reports-wrap { max-width: 1000px; margin: 24px 48px; }
+  .card { background:#fff; border-radius:16px; box-shadow:0 10px 20px rgba(0,0,0,0.08); padding:16px; margin-bottom:16px; }
+  .card h5 { margin:0 0 8px; color:#ff8a2f; }
+  .topbar-wrap { max-width: 1000px; }
+</style>
+<div class="reports-wrap">
+  <div class="card">
+    <h5>Активность по дням (создано проектов и дефектов)</h5>
+    <canvas id="dailyChart" height="160"></canvas>
+  </div>
+  <div class="card">
+    <h5>Дефекты по статусам</h5>
+    <canvas id="statusChart" height="140"></canvas>
+  </div>
+  <div class="card">
+    <h5>Дефекты по приоритетам</h5>
+    <canvas id="priorityChart" height="140"></canvas>
   </div>
 </div>
 <script>
@@ -19,7 +27,30 @@ const statusLabels = {{ status_labels|safe }};
 const statusData = {{ status_counts|safe }};
 const priorityLabels = {{ priority_labels|safe }};
 const priorityData = {{ priority_counts|safe }};
-new Chart(document.getElementById('statusChart'), {type:'bar', data:{labels:statusLabels, datasets:[{label:'Статус', data:statusData}]}});
-new Chart(document.getElementById('priorityChart'), {type:'bar', data:{labels:priorityLabels, datasets:[{label:'Приоритет', data:priorityData}]}});
+const orange = '#ff8a2f';
+const orangeBg = 'rgba(255,138,47,0.25)';
+const orangeBgHover = 'rgba(255,138,47,0.45)';
+function makeBar(ctx, labels, data){
+  return new Chart(ctx, {type:'bar', data:{ labels, datasets:[{ data, backgroundColor: orangeBg, hoverBackgroundColor: orangeBgHover, borderColor: orange, borderWidth: 1 }] }, options:{ plugins:{ legend:{ display:false } }, scales:{ x:{ grid:{ color:'rgba(0,0,0,0.06)' } }, y:{ grid:{ color:'rgba(0,0,0,0.06)' }, ticks:{ precision:0 } } } } });
+}
+makeBar(document.getElementById('statusChart'), statusLabels, statusData);
+makeBar(document.getElementById('priorityChart'), priorityLabels, priorityData);
+
+const dailyLabels = {{ daily_labels|safe }};
+const dailyProjects = {{ daily_projects|safe }};
+const dailyDefects = {{ daily_defects|safe }};
+new Chart(document.getElementById('dailyChart'), {
+  type:'line',
+  data:{ labels: dailyLabels, datasets:[
+    { label:'Создано проектов', data: dailyProjects, borderColor: orange, backgroundColor: 'transparent', tension: 0.2, cubicInterpolationMode:'monotone', pointRadius: 0, pointHoverRadius: 4, pointStyle:'circle', borderWidth: 2, fill:false },
+    { label:'Создано дефектов', data: dailyDefects, borderColor: '#26b07d', backgroundColor: 'transparent', tension: 0.2, cubicInterpolationMode:'monotone', pointRadius: 0, pointHoverRadius: 4, pointStyle:'circle', borderWidth: 2, fill:false },
+  ]},
+  options:{
+    plugins:{ legend:{ display:true, labels:{ usePointStyle:true, boxWidth:8 } }, tooltip:{ mode:'index', intersect:false, callbacks:{ label:function(ctx){ return ctx.dataset.label+': '+ctx.parsed.y; } } } },
+    interaction:{ mode:'index', intersect:false },
+    elements:{ line:{ borderWidth:2, borderCapStyle:'round', borderJoinStyle:'round' }, point:{ radius:0, hoverRadius:4 } },
+    scales:{ x:{ grid:{ color:'rgba(0,0,0,0.06)' } }, y:{ beginAtZero:true, suggestedMax: Math.max(...dailyProjects, ...dailyDefects) + 1, grid:{ color:'rgba(0,0,0,0.06)' }, ticks:{ precision:0 } } }
+  }
+});
 </script>
 {% endblock %}
