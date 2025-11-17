@@ -1,49 +1,75 @@
 {% extends "base.html" %}
 {% block title %}Проект{% endblock %}
+{% block topbar %}{% endblock %}
 {% block content %}
-<div class="container mt-4">
-  <div class="d-flex justify-content-between align-items-center">
-    <h3>{{ project.title }}</h3>
+<style>
+  .detail-wrap { max-width: 900px; margin: 24px 48px; background:#fff; border-radius:16px; box-shadow:0 10px 20px rgba(0,0,0,0.08); }
+  .detail-head { display:flex; align-items:center; justify-content:space-between; padding:18px 20px; border-bottom:1px solid #f0f0f0; }
+  .detail-title { margin:0; color:#ff8a2f; font-weight:700; }
+  .detail-body { padding:18px 20px; }
+  .list-title { margin:16px 0 6px; font-weight:600; color:#555f6d; }
+  .info-table { width:100%; border-collapse:collapse; }
+  .info-table th { width:180px; color:#555f6d; font-weight:600; padding:8px 0; }
+  .info-table td { padding:8px 0; }
+  .muted { color:#8a9096; }
+  .actions { display:flex; gap:10px; }
+  /* Uiverse-like buttons with color variants */
+  .action-btn { background-color: transparent; color: var(--c); height: 2.2em; border: 1px solid var(--c); border-radius: 10px; transition: all 0.4s ease; display:inline-flex; align-items:center; gap:8px; padding: 0 0.9em; text-decoration:none; }
+  .action-btn:hover { background-color: var(--c); cursor: pointer; color:#fff; border-radius: 8px; }
+  .action-btn svg { display:none; }
+  .action-btn .text { margin: 0; font-weight:500; }
+  .action-orange { --c: #ff8a2f; }
+  .action-gray { --c: #8a9096; }
+  .action-red { --c: #8a9096; }
+  /* Stages table */
+  .stages-head { display:flex; align-items:center; justify-content:space-between; margin-top:8px; }
+  .stages-table { width:100%; margin-top:10px; border-collapse:collapse; }
+  .stages-table th, .stages-table td { padding:10px 8px; border-bottom:1px solid #f0f0f0; }
+  .stages-table th { color:#555f6d; font-weight:600; }
+</style>
+<div class="detail-wrap">
+  <div class="detail-head">
+    <h3 class="detail-title">{{ project.title }}</h3>
     {% if user.is_manager %}
-      <a class="btn btn-warning" href="/projects/{{ project.id }}/edit/">Редактировать</a>
-      <a class="btn btn-danger" href="/projects/{{ project.id }}/delete/">Удалить</a>
+    <div class="actions">
+      <a class="action-btn action-gray" href="/projects/{{ project.id }}/edit/" title="Редактировать"><span class="text">Редактировать</span></a>
+      <a class="action-btn action-gray" href="/projects/{{ project.id }}/delete/" title="Удалить"><span class="text">Удалить</span></a>
+    </div>
     {% endif %}
   </div>
-  <div class="row mt-3">
-    <div class="col-md-6">
-      <table class="table">
-        <tr><th>Статус</th><td>{{ project.get_status_display }}</td></tr>
-        <tr><th>Дата начала</th><td>{{ project.start_date|default:"не задано" }}</td></tr>
-        <tr><th>Дата окончания</th><td>{{ project.end_date|default:"не задано" }}</td></tr>
-        <tr><th>Описание</th><td>{{ project.description }}</td></tr>
-      </table>
-    </div>
-  </div>
-  <div class="mt-4">
-    <div class="d-flex justify-content-between align-items-center">
-      <h5>Этапы</h5>
+  <div class="detail-body">
+    <table class="info-table">
+      <tr><th>Статус</th><td>{{ project.get_status_display }}</td></tr>
+      <tr><th>Дата начала</th><td>{{ project.start_date|default:"не задано" }}</td></tr>
+      <tr><th>Дата окончания</th><td>{{ project.end_date|default:"не задано" }}</td></tr>
+      <tr><th>Описание</th><td class="muted">{{ project.description|default:"" }}</td></tr>
+    </table>
+    <div class="stages-head">
+      <h5 style="margin:0;">Этапы</h5>
       {% if user.is_manager %}
-        <a class="btn btn-success btn-sm" href="/projects/{{ project.id }}/stages/create/">Добавить этап</a>
+        <a class="action-btn action-orange" href="/projects/{{ project.id }}/stages/create/" title="Добавить этап"><span class="text">Добавить этап</span></a>
+        <a class="action-btn action-gray" href="/projects/{{ project.id }}/objects/create/" title="Добавить объект"><span class="text">Добавить объект</span></a>
       {% endif %}
     </div>
-    <table class="table mt-2">
+    <table class="stages-table">
       <thead><tr><th>Название</th><th>Описание</th><th></th></tr></thead>
       <tbody>
         {% for s in project.stages.all %}
-          <tr>
-            <td>{{ s.title }}</td>
-            <td>{{ s.description }}</td>
-            <td>
-              {% if user.is_manager %}
-                <a class="btn btn-outline-secondary btn-sm" href="/projects/stages/{{ s.id }}/edit/">Редактировать</a>
-              {% endif %}
-            </td>
-          </tr>
+        <tr>
+          <td>{{ s.title }}</td>
+          <td class="muted">{{ s.description }}</td>
+          <td style="text-align:right;">
+            {% if user.is_manager %}
+              <a class="action-btn action-gray" href="/projects/stages/{{ s.id }}/edit/" title="Редактировать"><span class="text">Редактировать</span></a>
+            {% endif %}
+          </td>
+        </tr>
         {% empty %}
-          <tr><td colspan="3">Нет этапов</td></tr>
+        <tr><td colspan="3" class="muted">Нет этапов</td></tr>
         {% endfor %}
       </tbody>
     </table>
+    
   </div>
 </div>
 {% endblock %}

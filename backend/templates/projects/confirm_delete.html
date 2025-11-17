@@ -1,13 +1,27 @@
 {% extends "base.html" %}
 {% block title %}Удалить проект{% endblock %}
+{% block topbar %}{% endblock %}
 {% block content %}
-<div class="container mt-4">
-  <h3>Удалить проект</h3>
-  <div class="alert alert-warning">Вы уверены, что хотите удалить проект "{{ object.title }}"? Действие необратимо.</div>
-  <form method="post">
+<style>
+  .confirm-wrap { max-width: 720px; margin: 24px 48px; background:#fff; border-radius:16px; box-shadow:0 10px 20px rgba(0,0,0,0.08); padding:24px; }
+  .confirm-title { margin:0 0 10px; color:#ff8a2f; font-weight:700; }
+  .confirm-text { margin:0 0 16px; color:#8a9096; }
+  .actions { display:flex; gap:10px; }
+  .action-btn { background-color: transparent; color: var(--c); height: 2.2em; border: 1px solid var(--c); border-radius: 10px; transition: all 0.4s ease; display:inline-flex; align-items:center; gap:8px; padding: 0 0.9em; text-decoration:none; }
+  .action-btn:hover { background-color: var(--c); cursor: pointer; color:#fff; border-radius: 8px; }
+  .action-btn svg { width: 1.1em; height: 1.1em; position: relative; top: 0; transition: all 0.4s ease; fill: currentColor; }
+  .action-btn:hover svg { transform: translateX(4px); }
+  .action-btn .text { margin: 0; font-weight:500; }
+  .action-red { --c: #f06a61; }
+  .action-gray { --c: #8a9096; }
+</style>
+<div class="confirm-wrap">
+  <h3 class="confirm-title">Удалить проект</h3>
+  <p class="confirm-text">Вы уверены, что хотите удалить проект «{{ object.title }}»? Действие необратимо.</p>
+  <form method="post" class="actions">
     {% csrf_token %}
-    <button class="btn btn-danger" type="submit">Удалить</button>
-    <a class="btn btn-outline-secondary" href="/projects/{{ object.id }}/">Отмена</a>
+    <button class="action-btn action-red" type="submit"><span class="text">Удалить</span></button>
+    <a class="action-btn action-gray" href="/projects/{{ object.id }}/"><span class="text">Отмена</span></a>
   </form>
 </div>
 {% endblock %}

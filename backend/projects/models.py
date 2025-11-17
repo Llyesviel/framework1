@@ -26,3 +26,13 @@ class Stage(models.Model):
 
     def __str__(self):
         return f"{self.project_id}:{self.title}"
+
+class BuildObject(models.Model):
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="build_objects")
+    title = models.CharField(max_length=255)
+    type = models.CharField(max_length=255, blank=True)
+    address = models.CharField(max_length=255, blank=True)
+    description = models.TextField(blank=True)
+
+    def __str__(self):
+        return f"{self.project_id}:{self.title}"

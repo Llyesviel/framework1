@@ -126,7 +126,7 @@
     </div>
     <div class="recent-actions">
       {% for a in recent_actions %}
-        <div class="recent-item"><span class="time">{{ a.time }}</span> — {{ a.text }}</div>
+        <div class="recent-item" data-ts="{{ a.ts }}"><span class="time">{{ a.time }}</span> — {{ a.text }}</div>
       {% empty %}
         <div class="recent-item muted">Нет недавних действий</div>
       {% endfor %}
@@ -147,6 +147,21 @@
     }
     updateTime();
     setInterval(updateTime, 1000);
+  })();
+</script>
+<script>
+  (function(){
+    function fmtHM(d){
+      return d.toLocaleTimeString('ru-RU', { hour:'2-digit', minute:'2-digit' });
+    }
+    document.querySelectorAll('.recent-actions .recent-item').forEach(function(el){
+      var ts = el.getAttribute('data-ts');
+      if(ts){
+        var d = new Date(parseInt(ts, 10) * 1000);
+        var tEl = el.querySelector('.time');
+        if(tEl){ tEl.textContent = fmtHM(d); }
+      }
+    });
   })();
 </script>
 <script>

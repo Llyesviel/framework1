@@ -1,12 +1,26 @@
 {% extends "base.html" %}
 {% block title %}Вложения{% endblock %}
+{% block topbar %}{% endblock %}
 {% block content %}
-<div class="container mt-4">
+<style>
+  .form-wrap { max-width: 720px; margin: 24px 48px; background:#fff; border-radius:16px; box-shadow:0 10px 20px rgba(0,0,0,0.08); padding:24px; }
+  .form-wrap h3 { margin:0 0 16px; color:#ff8a2f; font-weight:700; }
+  input[type="file"] { border:1px solid #ddd; border-radius:10px; padding:10px 12px; width:100%; }
+  .button { background-color: transparent; color: #ff8a2f; height: 2.4em; border: 1px solid #ff8a2f; border-radius: 10px; transition: all 0.4s ease; display:inline-flex; align-items:center; gap:8px; padding: 0 1rem; }
+  .button:hover { background-color: #ff8a2f; cursor: pointer; color:#fff; border-radius: 8px; }
+  .button-gray { color:#8a9096; border-color:#8a9096; }
+  .button-gray:hover { background-color:#8a9096; color:#fff; }
+  .text { margin: 0; font-weight:600; }
+</style>
+<div class="form-wrap">
   <h3>Загрузка вложений</h3>
-  <form method="post" enctype="multipart/form-data">
+  <form method="post" enctype="multipart/form-data" novalidate>
     {% csrf_token %}
     {{ form.as_p }}
-    <button class="btn btn-primary" type="submit">Загрузить</button>
+    <div style="display:flex; gap:8px;">
+      <button class="button" type="submit"><span class="text">Загрузить</span></button>
+      <button type="button" class="button button-gray" onclick="history.back();"><span class="text">Назад</span></button>
+    </div>
   </form>
 </div>
 {% endblock %}

@@ -1,5 +1,5 @@
 from django import forms
-from .models import Project, Stage
+from .models import Project, Stage, BuildObject
 
 class ProjectForm(forms.ModelForm):
     class Meta:
@@ -32,5 +32,22 @@ class StageForm(forms.ModelForm):
         }
         labels = {
             "title": "Название",
+            "description": "Описание",
+        }
+
+class BuildObjectForm(forms.ModelForm):
+    class Meta:
+        model = BuildObject
+        fields = ["title", "type", "address", "description"]
+        widgets = {
+            "title": forms.TextInput(attrs={"class": "form-control"}),
+            "type": forms.TextInput(attrs={"class": "form-control"}),
+            "address": forms.TextInput(attrs={"class": "form-control"}),
+            "description": forms.Textarea(attrs={"class": "form-control"}),
+        }
+        labels = {
+            "title": "Название объекта",
+            "type": "Тип объекта",
+            "address": "Адрес",
             "description": "Описание",
         }

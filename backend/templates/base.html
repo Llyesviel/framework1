@@ -100,12 +100,41 @@
   </div>
   {% endif %}
   {% endblock %}
+  <style>
+    .notifications-container { position: fixed; right: 24px; bottom: 24px; width: 320px; display: flex; flex-direction: column; gap: 12px; z-index: 9999; }
+    .alert { background-color: #ffffff; border-left: 4px solid #ff8a2f; border-radius: 6px; padding: 12px; box-shadow:0 6px 16px rgba(0,0,0,0.12); }
+    .alert-prompt-wrap { margin-left: 12px; color: #c4661b; }
+    .alert-title { font-weight:600; color:#ff8a2f; margin:0 0 4px; }
+    .alert-text { color:#8a9096; margin:0; }
+    .flex { display:flex; align-items:flex-start; }
+    .flex-shrink-0 { flex-shrink:0; }
+    .alert-svg { width:20px; height:20px; color:#ff8a2f; }
+  </style>
   {% if messages %}
-    <div class="mt-2">
+    <div class="notifications-container">
       {% for message in messages %}
-        <div class="alert alert-info">{{ message }}</div>
+        <div class="alert">
+          <div class="flex">
+            <div class="flex-shrink-0">
+              <svg class="alert-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="currentColor" d="M11 7h2v6h-2zm0 8h2v2h-2z"/></svg>
+            </div>
+            <div class="alert-prompt-wrap">
+              <p class="alert-title">Успешно</p>
+              <p class="alert-text">{{ message }}</p>
+            </div>
+          </div>
+        </div>
       {% endfor %}
     </div>
+    <script>
+      (function(){
+        var cont = document.querySelector('.notifications-container');
+        if(!cont) return;
+        setTimeout(function(){
+          cont.querySelectorAll('.alert').forEach(function(el){ el.remove(); });
+        }, 3000);
+      })();
+    </script>
   {% endif %}
   {% block content %}{% endblock %}
 </div>

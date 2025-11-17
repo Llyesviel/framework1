@@ -1,12 +1,41 @@
 {% extends "base.html" %}
 {% block title %}Редактировать этап{% endblock %}
+{% block topbar %}{% endblock %}
 {% block content %}
-<div class="container mt-4">
+<style>
+  .form-wrap { max-width: 720px; margin: 24px 48px; background:#fff; border-radius:16px; box-shadow:0 10px 20px rgba(0,0,0,0.08); padding:24px; }
+  .form-wrap h3 { margin:0 0 16px; color:#ff8a2f; font-weight:700; }
+  input[type="text"], textarea { border:1px solid #ddd; border-radius:10px; padding:10px 12px; width:100%; }
+  input:focus, input:focus-visible, textarea:focus, textarea:focus-visible { outline:none !important; border-color: rgba(247,127,0,0.55) !important; box-shadow: 0 0 0 4px rgba(247,127,0,0.14) !important; }
+  .form-control:focus, .form-control:focus-visible { outline:none !important; border-color: rgba(247,127,0,0.55) !important; box-shadow: 0 0 0 4px rgba(247,127,0,0.14) !important; }
+  ul.errorlist { list-style:none; padding:10px 14px; margin:8px 0; border:1px solid #ff8a2f; border-radius:12px; background: rgba(255,138,47,0.08); color:#b0581f; box-shadow:0 2px 6px rgba(0,0,0,0.06); }
+  ul.errorlist li { margin:0; }
+  .button { background-color: transparent; color: #ff8a2f; height: 2.4em; border: 1px solid #ff8a2f; border-radius: 10px; transition: all 0.4s ease; display:inline-flex; align-items:center; gap:8px; padding: 0 1rem; }
+  .button:hover { background-color: #ff8a2f; cursor: pointer; color:#fff; border-radius: 8px; }
+  .button svg { width: 1.2em; height: 1.2em; position: relative; top: 0; transition: all 0.4s ease; fill: currentColor; }
+  .button:hover svg { transform: translateX(4px); }
+  .button-gray { color:#8a9096; border-color:#8a9096; }
+  .button-gray:hover { background-color:#8a9096; color:#fff; }
+  .text { margin: 0; font-weight:600; }
+  .field { margin-bottom:14px; }
+  .label { font-weight:600; color:#555f6d; margin-bottom:6px; }
+</style>
+<div class="form-wrap">
   <h3>Редактировать этап</h3>
-  <form method="post">
+  <form method="post" novalidate>
     {% csrf_token %}
-    {{ form.as_p }}
-    <button class="btn btn-primary" type="submit">Сохранить</button>
+    {% if form.non_field_errors %}{{ form.non_field_errors }}{% endif %}
+    {% for field in form %}
+      <div class="field">
+        <div class="label">{{ field.label }}</div>
+        {{ field }}
+        {% if field.errors %}{{ field.errors }}{% endif %}
+      </div>
+    {% endfor %}
+    <div style="display:flex; gap:8px;">
+      <button class="button" type="submit"><span class="text">Сохранить</span></button>
+      <button type="button" class="button button-gray" onclick="history.back();"><span class="text">Назад</span></button>
+    </div>
   </form>
 </div>
 {% endblock %}

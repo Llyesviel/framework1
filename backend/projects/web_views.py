@@ -4,8 +4,9 @@ from django.urls import reverse_lazy
 from django.db.models import Count
 from users.models import User
 from users.permissions import IsManager
-from .models import Project, Stage
-from .forms import ProjectForm, StageForm
+from .models import Project, Stage, BuildObject
+from .forms import ProjectForm, StageForm, BuildObjectForm
+from django.contrib import messages
 from django.contrib.admin.models import LogEntry, ADDITION, CHANGE, DELETION
 from django.contrib.contenttypes.models import ContentType
 from django.utils import timezone
@@ -43,12 +44,13 @@ class ProjectListView(LoginRequiredMixin, ListView):
             ct = ContentType.objects.get_for_model(Project)
             entries = (
                 LogEntry.objects.filter(content_type_id=ct.id)
-                .order_by("-action_time")[:6]
+                .order_by("-action_time")[:10]
             )
             action_map = {1: "создан проект", 2: "отредактирован проект", 3: "удалён проект"}
             recent = [
                 {
                     "time": timezone.localtime(e.action_time).strftime("%H:%M"),
+                    "ts": int(e.action_time.timestamp()),
                     "text": f"{action_map.get(e.action_flag, 'действие')} {e.object_repr}",
                 }
                 for e in entries
@@ -79,6 +81,7 @@ class ProjectCreateView(ManagerRequiredMixin, CreateView):
             action_flag=ADDITION,
             change_message="created",
         )
+        messages.success(self.request, "Проект успешно создан")
         return response
 
 class ProjectUpdateView(ManagerRequiredMixin, UpdateView):
@@ -97,6 +100,7 @@ class ProjectUpdateView(ManagerRequiredMixin, UpdateView):
             action_flag=CHANGE,
             change_message="updated",
         )
+        messages.success(self.request, "Проект успешно сохранён")
         return response
 
 class StageCreateView(ManagerRequiredMixin, CreateView):
@@ -107,6 +111,7 @@ class StageCreateView(ManagerRequiredMixin, CreateView):
     def form_valid(self, form):
         project_id = self.kwargs.get("pk")
         form.instance.project_id = project_id
+        messages.success(self.request, "Этап успешно создан")
         return super().form_valid(form)
 
     def get_success_url(self):
@@ -119,6 +124,10 @@ class StageUpdateView(ManagerRequiredMixin, UpdateView):
 
     def get_success_url(self):
         return reverse_lazy("project_detail", kwargs={"pk": self.object.project_id})
+
+    def form_valid(self, form):
+        messages.success(self.request, "Этап успешно сохранён")
+        return super().form_valid(form)
 
 class ProjectDeleteView(ManagerRequiredMixin, DeleteView):
     model = Project
@@ -140,3 +149,16 @@ class ProjectDeleteView(ManagerRequiredMixin, DeleteView):
             change_message="deleted",
         )
         return response
+
+class BuildObjectCreateView(ManagerRequiredMixin, CreateView):
+    model = BuildObject
+    form_class = BuildObjectForm
+    template_name = "projects/object_create.html"
+
+    def form_valid(self, form):
+        form.instance.project_id = self.kwargs.get("pk")
+        messages.success(self.request, "Объект успешно создан")
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy("project_detail", kwargs={"pk": self.kwargs.get("pk")})

@@ -7,6 +7,7 @@ from .web_views import (
     StageCreateView,
     StageUpdateView,
     ProjectDeleteView,
+    BuildObjectCreateView,
 )
 
 urlpatterns = [
@@ -17,4 +18,5 @@ urlpatterns = [
     path("<int:pk>/delete/", ProjectDeleteView.as_view(), name="project_delete"),
     path("<int:pk>/stages/create/", StageCreateView.as_view(), name="stage_create"),
     path("stages/<int:pk>/edit/", StageUpdateView.as_view(), name="stage_edit"),
+    path("<int:pk>/objects/create/", BuildObjectCreateView.as_view(), name="object_create"),
 ]
