@@ -9,42 +9,97 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
 <body>
-{% block header %}
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-  <div class="container-fluid">
-    <a class="navbar-brand" href="/projects/">Дефекты</a>
-    <div class="collapse navbar-collapse">
-      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-        {% if user.is_authenticated %}
-          {% if user.is_manager %}
-            <li class="nav-item"><a class="nav-link" href="/projects/">Проекты</a></li>
-            <li class="nav-item"><a class="nav-link" href="/defects/">Дефекты</a></li>
-            <li class="nav-item"><a class="nav-link" href="/reports/dashboard/">Отчёты</a></li>
-            <li class="nav-item"><a class="nav-link" href="/users/">Пользователи</a></li>
-          {% elif user.is_engineer %}
-            <li class="nav-item"><a class="nav-link" href="/projects/">Мои проекты</a></li>
-            <li class="nav-item"><a class="nav-link" href="/defects/">Мои дефекты</a></li>
-          {% elif user.is_observer %}
-            <li class="nav-item"><a class="nav-link" href="/projects/">Проекты</a></li>
-            <li class="nav-item"><a class="nav-link" href="/defects/">Дефекты</a></li>
-            <li class="nav-item"><a class="nav-link" href="/reports/dashboard/">Отчёты</a></li>
-          {% endif %}
-        {% endif %}
-      </ul>
-      <ul class="navbar-nav">
-        {% if user.is_authenticated %}
-          <li class="nav-item"><a class="nav-link" href="/profile/">{{ user.username }}</a></li>
-          <li class="nav-item"><a class="nav-link" href="/logout/">Выход</a></li>
-        {% else %}
-          <li class="nav-item"><a class="nav-link" href="/login/">Вход</a></li>
-        {% endif %}
-      </ul>
-    </div>
+<style>
+  .sidebar { position: fixed; left:0; top:0; bottom:0; width:240px; background:#eee; color:#ff8a2f; padding:24px 16px; display:flex; flex-direction:column; }
+  .brand { font-weight:800; letter-spacing:.5px; font-size:20px; margin-bottom:24px; display:flex; align-items:center; gap:10px; }
+  .brand-sep { height:1px; background: rgba(255,138,47,0.6); margin:8px 0 14px; }
+  .nav-group { flex:1; background:transparent; box-shadow:none; border-radius:0; padding:0; display:flex; flex-direction:column; gap:8px; }
+  .nav-item { display:flex; align-items:center; gap:12px; padding:10px 12px; border-radius:10px; color:#ff8a2f; text-decoration:none; transition: all .15s ease-in-out; }
+  .nav-item svg { fill: currentColor; }
+  .nav-item:hover { background:#fff; color:#ff8a2f; }
+  .nav-item.active { background:#fff; color:#ff8a2f; position:relative; box-shadow:0 2px 8px rgba(0,0,0,0.1); animation: select .3s ease; }
+  @keyframes select { 0% { transform: scale(0.95);} 50% { transform: scale(1.05);} 100% { transform: scale(1);} }
+  .nav-item.active::before, .nav-item.active::after { content:""; position:absolute; width:4px; height:4px; border-radius:50%; background:#ff8a2f; opacity:0; animation: particles .5s ease forwards; left:50%; transform:translateX(-50%); }
+  .nav-item.active::before { top:-8px; --direction:-10px; }
+  .nav-item.active::after { bottom:-8px; --direction:10px; }
+  @keyframes particles { 0% { opacity:0; transform: translateX(-50%) translateY(0);} 50% { opacity:1;} 100% { opacity:0; transform: translateX(-50%) translateY(var(--direction));} }
+  .nav-bottom { margin-top:auto; border-top: 1px solid rgba(255,138,47,0.6); padding-top: 12px; }
+  .nav-bottom .nav-item { color:#ff8a2f; }
+  .nav-bottom .nav-item:hover { background:#fff; color:#ff8a2f; }
+  .main { padding:24px 24px 24px 24px; }
+  .with-sidebar { margin-left:280px; }
+  .btn-orange { background: linear-gradient(90deg,#ff7a29,#ff9933); color:#fff; border:none; }
+  .btn-orange:hover { filter: brightness(0.95); color:#fff; }
+  .card-list { max-width:900px; margin:24px 24px 40px 48px; background:#fff; border-radius:16px; box-shadow:0 10px 20px rgba(0,0,0,0.08); }
+  .card-list .row-item { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid #f0f0f0; }
+  .card-list .row-item:last-child { border-bottom:none; }
+  .muted { color:#8a9096; }
+  .topbar { height:60px; display:flex; align-items:center; justify-content:center; background:#fff; position:sticky; top:0; z-index:5; border-bottom:1px solid rgba(0,0,0,0.04); box-shadow:0 6px 12px rgba(0,0,0,0.05); border-top-left-radius:14px; }
+  .topbar-wrap { position:relative; max-width:900px; margin:0 24px 0 48px; }
+  .topbar-title { font-weight:600; color:#ff8a2f; display:inline-flex; align-items:center; gap:10px; transition: all .3s ease; cursor: default; background:#fff7f0; border-radius:8px; padding:6px 12px; }
+  .topbar-title:hover { background:#ff8a2f; box-shadow:0 0 0 5px rgba(255,138,47,0.37); color:#fff; }
+  .topbar-right { display:none !important; }
+  .topbar { overflow:hidden; }
+</style>
+
+{% block sidebar %}
+{% if user.is_authenticated %}
+<div class="sidebar">
+  <div class="brand"><img src="/media/block.png" alt="logo" style="width:24px;height:24px;"> block</div>
+  <div class="brand-sep"></div>
+  <div class="nav-group">
+    <a class="nav-item {% if "/projects/" in request.path %}active{% endif %}" href="/projects/">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16"><path d="M2 2h12v3H2z"/><path d="M2 7h12v7H2z"/></svg>
+      Проекты
+    </a>
+    <a class="nav-item {% if "/defects/" in request.path %}active{% endif %}" href="/defects/">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16"><path d="M8 1l7 4-7 4-7-4z"/><path d="M1 9l7 4 7-4"/></svg>
+      Дефекты
+    </a>
+    <a class="nav-item {% if "/reports/" in request.path %}active{% endif %}" href="/reports/dashboard/">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16"><path d="M2 13h3V6H2zM7 13h3V3H7zM12 13h3V8h-3z"/></svg>
+      Отчёты
+    </a>
+    {% if user.is_manager %}
+    <a class="nav-item {% if "/users/" in request.path %}active{% endif %}" href="/users/">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16"><path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M2 14s1-4 6-4 6 4 6 4H2z"/></svg>
+      Пользователи
+    </a>
+    {% endif %}
   </div>
-  </nav>
+  <div class="nav-bottom">
+    <a class="nav-item" href="/profile/">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16"><path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M2 14s1-4 6-4 6 4 6 4H2z"/></svg>
+      Профиль
+    </a>
+    <a class="nav-item" href="/logout/">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16"><path d="M6 2h3v3h2V1H6z"/><path d="M10.5 8l-3 3V9H1V7h6.5V5z"/></svg>
+      Выход
+    </a>
+  </div>
+</div>
+{% endif %}
 {% endblock %}
 
-<div class="container-fluid">
+<div class="main {% block layout_class %}with-sidebar{% endblock %}">
+  {% block topbar %}
+  {% if user.is_authenticated %}
+  <div class="topbar-wrap">
+    <div class="topbar">
+      <div class="topbar-title">{% block page_title %}{% endblock %}</div>
+      <div class="topbar-right">
+        <div class="avatar">
+          {% if user.profile and user.profile.avatar %}
+            <img src="{{ user.profile.avatar.url }}" style="width:100%;height:100%;object-fit:cover;" alt="avatar">
+          {% else %}
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#888" viewBox="0 0 16 16"><path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M2 14s1-4 6-4 6 4 6 4H2z"/></svg>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+  {% endblock %}
   {% if messages %}
     <div class="mt-2">
       {% for message in messages %}

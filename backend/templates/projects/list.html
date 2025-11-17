@@ -1,38 +1,160 @@
 {% extends "base.html" %}
 {% block title %}Проекты{% endblock %}
+{% block page_title %}Проекты{% endblock %}
+{% block page_icon %}<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="M2 2h12v3H2z"/><path d="M2 7h12v7H2z"/></svg>{% endblock %}
 {% block content %}
-<div class="container mt-4">
-  <div class="d-flex justify-content-between align-items-center">
-    <h3>Проекты</h3>
-    {% if user.is_manager %}
-      <a class="btn btn-success" href="/projects/create/">Создать проект</a>
-    {% endif %}
-  </div>
-  <table class="table table-striped mt-3">
-    <thead>
-      <tr>
-        <th>Название</th>
-        <th>Статус</th>
-        <th>Начало</th>
-        <th>Окончание</th>
-        <th>Дефектов</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for p in projects %}
-      <tr>
-        <td>{{ p.title }}</td>
-        <td>{{ p.get_status_display }}</td>
-        <td>{{ p.start_date|default:"не задано" }}</td>
-        <td>{{ p.end_date|default:"не задано" }}</td>
-        <td>{{ p.defects_count }}</td>
-        <td><a class="btn btn-outline-primary btn-sm" href="/projects/{{ p.id }}/">Открыть</a></td>
-      </tr>
-      {% empty %}
-      <tr><td colspan="6" class="text-center">Нет проектов</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
+<style>
+  .radio-inputs { position: relative; display: flex; flex-wrap: wrap; border-radius: 10px; background-color: #eee; box-sizing: border-box; box-shadow: 0 0 0px 1px rgba(0, 0, 0, 0.04); padding: 3px; width: 420px; font-size: 13px; margin: 0; }
+  .radio-inputs .radio { flex: 1 1 auto; text-align: center; }
+  .radio-inputs .radio input { display: none; }
+  .radio-inputs .radio .name { display: flex; cursor: pointer; align-items: center; justify-content: center; border-radius: 8px; border: none; padding: 8px 0; color: #555f6d; transition: all 0.15s ease-in-out; }
+  .radio-inputs .radio input:checked + .name { background-color: #fff; font-weight: 600; position: relative; box-shadow: 0 1px 6px rgba(0, 0, 0, 0.08); animation: select 0.25s ease; }
+  .radio-inputs .radio:hover .name { background-color: rgba(255, 255, 255, 0.5); }
+  @keyframes select { 0% { transform: scale(0.98);} 50% { transform: scale(1.03);} 100% { transform: scale(1);} }
+  .radio-inputs .radio input:checked + .name::before, .radio-inputs .radio input:checked + .name::after { content: ""; position: absolute; width: 4px; height: 4px; border-radius: 50%; background: #ff8a2f; opacity: 0; animation: particles 0.5s ease forwards; }
+  .radio-inputs .radio input:checked + .name::before { top: -8px; left: 50%; transform: translateX(-50%); }
+  .radio-inputs .radio input:checked + .name::after { bottom: -8px; left: 50%; transform: translateX(-50%); }
+  @keyframes particles { 0% { opacity: 0; transform: translateX(-50%) translateY(0);} 50% { opacity: 1;} 100% { opacity: 0; transform: translateX(-50%) translateY(var(--direction));} }
+  .radio-inputs .radio input:checked + .name::before { --direction: -10px; }
+  .radio-inputs .radio input:checked + .name::after { --direction: 10px; }
+  .button { position:relative; background-color: transparent; color: #ff8a2f; width: 6.6em; height: 2.2em; border: 1px solid #ff8a2f; border-radius: 22px; text-align: right; transition: all 0.4s ease; display:inline-flex; align-items:center; justify-content:flex-end; padding-right: 0.9em; font-size: 12px; }
+  .button:hover { background-color: #ff8a2f; cursor: pointer; border-radius: 8px; color:#fff; }
+  .button svg { width: 1.2em; margin: 0 0.6em 0; position: absolute; right: 0.35em; transition: all 0.4s ease; fill: currentColor; }
+  .button:hover svg { transform: translateX(3px); }
+  .text { margin: 0 1.2em; }
+  .create-pill { display:inline-flex; align-items:center; gap:8px; border:1px solid #ff8a2f; color:#ff8a2f; border-radius:999px; padding:6px 10px; font-size:13px; font-weight:600; text-decoration:none; }
+  .create-pill:hover { background:#ff8a2f; color:#fff; }
+  .create-pill .plus { width:16px; height:16px; display:inline-block; border-radius:50%; border:1px solid currentColor; position:relative; }
+  .create-pill .plus::before { content:""; position:absolute; left:50%; top:3px; bottom:3px; width:1px; background: currentColor; transform: translateX(-50%); }
+  .create-pill .plus::after { content:""; position:absolute; top:50%; left:3px; right:3px; height:1px; background: currentColor; transform: translateY(-50%); }
+  .filters-wrap { display:flex; align-items:center; justify-content:space-between; column-gap:24px; margin: 0 0 16px 0; }
+  .content-row { display:flex; align-items:flex-start; gap:24px; max-width:1200px; margin: 16px 24px 40px 48px; }
+  .left-col { flex:1; }
+  .content-row .card-list { margin:0; }
+  .time-side { width: 280px; }
+  .card-time-cloud { position: relative; border-radius: 1em; width: 17.5em; height: 8em; z-index: 2; border: solid 0.15em var(--color1); transition: none; box-shadow: 0em 0em rgb(0, 0, 0, 0.25); overflow: hidden; --color1: rgb(237, 120, 42); --skycolor: #ffffff; }
+  .card-time-cloud-front { width: 20em; height: 12.5em; background: rgb(228, 228, 228); border-radius: 1em; position: absolute; z-index: 2; top: 95%; left: 50%; transform: translate(-50%, -50%); transition: none; }
+  .card-time-cloud-back { width: 20em; height: 17.5em; background: var(--skycolor); border-radius: 1em; position: absolute; z-index: 1; top: 57.5%; left: 50%; transform: translate(-50%, -50%); transition: none; }
+  /* no hover visual changes for the whole card */
+  /* .card-time-cloud:hover { } */
+  /* hover removed to avoid overlap */
+  /* .card-time-cloud:hover .card-time-cloud-front { top: 105%; } */
+  .card-time-cloud-back svg { position: absolute; z-index: 1; top: -16.45em; left: -7.5em; width: 25em; height: auto; opacity: 100%; animation: rotate-cloud 15s linear infinite; }
+  .card-time-cloud-back svg:nth-child(2) { animation: rotate-cloud 15s linear infinite 1s; opacity: 50%; }
+  @keyframes rotate-cloud { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  .card-time-cloud-day { color: var(--color1); position: absolute; z-index: 3; top: 1.25em; left: 0.5em; font-size: 1.5em; font-weight: bold; transition: none; }
+  .card-time-cloud-day-number { color: var(--color1); position: absolute; z-index: 3; top: 3em; left: 0.65em; font-size: 1.25em; font-weight: 500; transition: none; }
+  .card-time-cloud-hour { color: var(--color1); position: absolute; z-index: 3; top: 1.25em; right: 0.5em; font-size: 1.6em; font-weight: bold; transition: none; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  /* keep fixed height to avoid overlap */
+  /* .card-time-cloud:hover { height: 15em; } */
+  .card-time-cloud-icon svg { position: absolute; z-index: 4; top: 4em; right: 0.6em; transform: rotate(0deg); width: 1.5em; height: auto; }
+  /* disable active animations to avoid overlap */
+  /* .card-time-cloud:active { } */
+  /* .card-time-cloud:active .card-time-cloud-front { } */
+  /* .card-time-cloud:active .card-time-cloud-icon svg { } */
+  .group { display:flex; line-height:28px; align-items:center; position:relative; max-width: 280px; margin:0; }
+  .input { width:100%; height:40px; line-height:28px; padding:0 1rem; padding-left:2.5rem; border:2px solid transparent; border-radius:8px; outline:none; background-color:#f3f3f4; color:#0d0c22; transition:0.3s ease; }
+  .input::placeholder { color:#9e9ea7; }
+  .input:focus, .input:hover { outline:none; border-color: rgba(247, 127, 0, 0.4); background-color:#fff; box-shadow:0 0 0 4px rgb(247 127 0 / 10%); }
+  .icon { position:absolute; left:1rem; fill:#9e9ea7; width:1rem; height:1rem; }
+  .project-title { color:#ff8a2f; }
+  .recent-actions { margin-top:12px; }
+  .recent-item { font-size:12px; color:#555f6d; padding:6px 8px; border-radius:8px; background:#fff; border-left:2px solid #ff8a2f; box-shadow:0 2px 6px rgba(0,0,0,0.06); margin-bottom:8px; }
+  .recent-item .time { color:#ff8a2f; font-weight:600; margin-right:6px; }
+  .recent-item.muted { color:#9ea5ac; background:#f7f7f7; border-left-color:#ddd; box-shadow:none; }
+</style>
+<div class="content-row">
+  <div class="left-col">
+    <div class="filters-wrap">
+      <div class="radio-inputs">
+        <label class="radio">
+          <input type="radio" name="status" value="" {% if not request.GET.status %}checked{% endif %}>
+          <span class="name">Все проекты</span>
+        </label>
+        <label class="radio">
+          <input type="radio" name="status" value="active" {% if request.GET.status == 'active' %}checked{% endif %}>
+          <span class="name">Активные</span>
+        </label>
+        <label class="radio">
+          <input type="radio" name="status" value="closed" {% if request.GET.status == 'closed' %}checked{% endif %}>
+          <span class="name">Закрытые</span>
+        </label>
+      </div>
+      <form class="group" method="get" action="/projects/">
+        <input type="hidden" name="status" value="{{ request.GET.status }}">
+        <svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M10 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16zm11 3-6-6" stroke="#9e9ea7" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+        <input class="input" type="text" name="q" placeholder="Поиск проекта" value="{{ request.GET.q }}">
+      </form>
+    </div>
+    <div class="card-list">
+    <div class="d-flex justify-content-between align-items-center" style="padding:16px 20px;">
+      <h4 style="margin:0;">Проекты</h4>
+      {% if user.is_manager %}
+        <a class="create-pill" href="/projects/create/" title="Создать проект">
+          <span>Создать проект</span>
+          <span class="plus"></span>
+        </a>
+      {% endif %}
+    </div>
+    {% for p in projects %}
+      <div class="row-item">
+        <div>
+          <div><strong class="project-title">{{ p.title }}</strong></div>
+          <div class="muted">Статус: {{ p.get_status_display }} • Начало: {{ p.start_date|default:"не задано" }} • Окончание: {{ p.end_date|default:"не задано" }}</div>
+        </div>
+        <div class="d-flex align-items-center" style="gap:8px;">
+          <span class="muted">Дефектов: {{ p.defects_count }}</span>
+          <a class="button" href="/projects/{{ p.id }}/"><span class="text">Открыть</span><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="M5 3l6 5-6 5V3z"/></svg></a>
 </div>
+</div>
+    {% empty %}
+      <div class="row-item"><span class="muted">Нет проектов</span></div>
+    {% endfor %}
+  </div>
+  </div>
+  <div class="time-side">
+    <div class="card-time-cloud">
+      <div class="card-time-cloud-back">
+        <svg viewBox="0 0 64 32" xmlns="http://www.w3.org/2000/svg"><path fill="#f2f2f2" d="M12 20c-6 0-10-4-10-9s4-9 10-9c3 0 5 1 7 3 2-3 6-5 10-5 7 0 13 6 13 13 4 0 7 3 7 7s-3 7-7 7H12z"/></svg>
+        <svg viewBox="0 0 64 32" xmlns="http://www.w3.org/2000/svg"><path fill="#e6e6e6" d="M16 22c-6 0-10-4-10-9s4-9 10-9c3 0 5 1 7 3 2-3 6-5 10-5 7 0 13 6 13 13 4 0 7 3 7 7s-3 7-7 7H16z"/></svg>
+      </div>
+      <div class="card-time-cloud-front"></div>
+      <div id="cloud-day" class="card-time-cloud-day"></div>
+      <div id="cloud-day-number" class="card-time-cloud-day-number"></div>
+      <div id="cloud-hour" class="card-time-cloud-hour"></div>
+      <div class="card-time-cloud-icon"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="3" fill="#ed782a"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.5 4.5l2.1 2.1M17.4 17.4l2.1 2.1M4.5 19.5l2.1-2.1M17.4 6.6l2.1-2.1" stroke="#ed782a" stroke-width="1.5"/></svg></div>
+    </div>
+    <div class="recent-actions">
+      {% for a in recent_actions %}
+        <div class="recent-item"><span class="time">{{ a.time }}</span> — {{ a.text }}</div>
+      {% empty %}
+        <div class="recent-item muted">Нет недавних действий</div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+<script>
+  (function(){
+    function updateTime(){
+      var now = new Date();
+      var days = ['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'];
+      var dayEl = document.getElementById('cloud-day');
+      var dateEl = document.getElementById('cloud-day-number');
+      var timeEl = document.getElementById('cloud-hour');
+      if(dayEl) dayEl.textContent = days[now.getDay()];
+      if(dateEl) dateEl.textContent = now.toLocaleDateString('ru-RU', { day:'2-digit', month:'long', year:'numeric' });
+      if(timeEl) timeEl.textContent = now.toLocaleTimeString('ru-RU', { hour:'2-digit', minute:'2-digit' });
+    }
+    updateTime();
+    setInterval(updateTime, 1000);
+  })();
+</script>
+<script>
+  document.querySelectorAll('.radio-inputs input[name="status"]').forEach(function(el){
+    el.addEventListener('change', function(){
+      var v = this.value;
+      window.location.href = v ? ('/projects/?status=' + v) : '/projects/';
+    });
+  });
+</script>
 {% endblock %}

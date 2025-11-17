@@ -6,6 +6,9 @@ from users.models import User
 from users.permissions import IsManager
 from .models import Project, Stage
 from .forms import ProjectForm, StageForm
+from django.contrib.admin.models import LogEntry, ADDITION, CHANGE, DELETION
+from django.contrib.contenttypes.models import ContentType
+from django.utils import timezone
 
 class ManagerRequiredMixin:
     def dispatch(self, request, *args, **kwargs):
@@ -23,10 +26,37 @@ class ProjectListView(LoginRequiredMixin, ListView):
         qs = Project.objects.annotate(defects_count=Count("defects"))
         user = self.request.user
         if user.is_manager:
-            return qs
-        if user.is_engineer:
-            return qs.filter(members=user)
+            pass
+        elif user.is_engineer:
+            qs = qs.filter(members=user)
+        status = self.request.GET.get("status")
+        q = self.request.GET.get("q")
+        if status in (Project.STATUS_ACTIVE, Project.STATUS_CLOSED):
+            qs = qs.filter(status=status)
+        if q:
+            qs = qs.filter(title__icontains=q)
         return qs
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        try:
+            ct = ContentType.objects.get_for_model(Project)
+            entries = (
+                LogEntry.objects.filter(content_type_id=ct.id)
+                .order_by("-action_time")[:6]
+            )
+            action_map = {1: "создан проект", 2: "отредактирован проект", 3: "удалён проект"}
+            recent = [
+                {
+                    "time": timezone.localtime(e.action_time).strftime("%H:%M"),
+                    "text": f"{action_map.get(e.action_flag, 'действие')} {e.object_repr}",
+                }
+                for e in entries
+            ]
+            ctx["recent_actions"] = recent
+        except Exception:
+            ctx["recent_actions"] = []
+        return ctx
 
 class ProjectDetailView(LoginRequiredMixin, DetailView):
     model = Project
@@ -39,11 +69,35 @@ class ProjectCreateView(ManagerRequiredMixin, CreateView):
     template_name = "projects/create.html"
     success_url = reverse_lazy("projects_list")
 
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        LogEntry.objects.log_action(
+            user_id=self.request.user.pk,
+            content_type_id=ContentType.objects.get_for_model(Project).pk,
+            object_id=self.object.pk,
+            object_repr=str(self.object),
+            action_flag=ADDITION,
+            change_message="created",
+        )
+        return response
+
 class ProjectUpdateView(ManagerRequiredMixin, UpdateView):
     model = Project
     form_class = ProjectForm
     template_name = "projects/edit.html"
     success_url = reverse_lazy("projects_list")
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        LogEntry.objects.log_action(
+            user_id=self.request.user.pk,
+            content_type_id=ContentType.objects.get_for_model(Project).pk,
+            object_id=self.object.pk,
+            object_repr=str(self.object),
+            action_flag=CHANGE,
+            change_message="updated",
+        )
+        return response
 
 class StageCreateView(ManagerRequiredMixin, CreateView):
     model = Stage
@@ -70,3 +124,19 @@ class ProjectDeleteView(ManagerRequiredMixin, DeleteView):
     model = Project
     template_name = "projects/confirm_delete.html"
     success_url = reverse_lazy("projects_list")
+
+    def delete(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        obj_pk = self.object.pk
+        obj_repr = str(self.object)
+        ct_id = ContentType.objects.get_for_model(Project).pk
+        response = super().delete(request, *args, **kwargs)
+        LogEntry.objects.log_action(
+            user_id=request.user.pk,
+            content_type_id=ct_id,
+            object_id=obj_pk,
+            object_repr=obj_repr,
+            action_flag=DELETION,
+            change_message="deleted",
+        )
+        return response
