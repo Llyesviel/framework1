@@ -5,10 +5,12 @@
   <div class="d-flex justify-content-between align-items-center">
     <h3>{{ defect.title }}</h3>
     <div>
-      {% if user.is_authenticated %}
+        {% if user.is_authenticated %}
         {% if user.is_manager %}
           <a class="btn btn-warning" href="/defects/{{ defect.id }}/edit/">Редактировать</a>
           <a class="btn btn-secondary" href="/defects/{{ defect.id }}/change_status/">Изменить статус</a>
+          <a class="btn btn-info" href="/defects/{{ defect.id }}/assign/">Назначить инженера</a>
+          <a class="btn btn-danger" href="/defects/{{ defect.id }}/delete/">Удалить</a>
         {% elif user.is_engineer and defect.performer_id == user.id %}
           <a class="btn btn-warning" href="/defects/{{ defect.id }}/edit/">Редактировать</a>
           <a class="btn btn-secondary" href="/defects/{{ defect.id }}/change_status/">Изменить статус</a>

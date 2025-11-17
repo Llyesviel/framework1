@@ -6,6 +6,7 @@
     <h3>{{ project.title }}</h3>
     {% if user.is_manager %}
       <a class="btn btn-warning" href="/projects/{{ project.id }}/edit/">Редактировать</a>
+      <a class="btn btn-danger" href="/projects/{{ project.id }}/delete/">Удалить</a>
     {% endif %}
   </div>
   <div class="row mt-3">

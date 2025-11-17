@@ -1,5 +1,5 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.generic import ListView, DetailView, CreateView, UpdateView
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.urls import reverse_lazy
 from django.db.models import Count
 from users.models import User
@@ -65,3 +65,8 @@ class StageUpdateView(ManagerRequiredMixin, UpdateView):
 
     def get_success_url(self):
         return reverse_lazy("project_detail", kwargs={"pk": self.object.project_id})
+
+class ProjectDeleteView(ManagerRequiredMixin, DeleteView):
+    model = Project
+    template_name = "projects/confirm_delete.html"
+    success_url = reverse_lazy("projects_list")

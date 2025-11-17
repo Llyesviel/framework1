@@ -3,7 +3,7 @@
 {% block content %}
 <div class="container mt-4">
   <h3>Редактировать дефект</h3>
-  <form method="post">
+  <form method="post" enctype="multipart/form-data">
     {% csrf_token %}
     {{ form.as_p }}
     <button class="btn btn-primary" type="submit">Сохранить</button>

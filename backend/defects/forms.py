@@ -1,5 +1,7 @@
 from django import forms
 from .models import Defect, Attachment, Comment
+from django import forms
+from django.contrib.auth import get_user_model
 
 class DefectForm(forms.ModelForm):
     class Meta:
@@ -25,6 +27,13 @@ class DefectForm(forms.ModelForm):
             "performer": "Исполнитель",
             "deadline": "Срок выполнения",
         }
+    attachments = forms.FileField(required=False, widget=forms.ClearableFileInput(attrs={"class": "form-control"}), label="Вложения")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        User = get_user_model()
+        if "performer" in self.fields:
+            self.fields["performer"].queryset = User.objects.filter(role="engineer")
 
 class DefectStatusForm(forms.Form):
     status = forms.ChoiceField(label="Статус", choices=Defect.STATUS_CHOICES, widget=forms.Select(attrs={"class": "form-select"}))
@@ -46,3 +55,6 @@ class CommentForm(forms.ModelForm):
             "text": forms.Textarea(attrs={"class": "form-control"}),
         }
         labels = {"text": "Комментарий"}
+
+class AssignPerformerForm(forms.Form):
+    performer = forms.ModelChoiceField(queryset=get_user_model().objects.none(), label="Инженер", widget=forms.Select(attrs={"class": "form-select"}))

@@ -6,6 +6,8 @@ from .web_views import (
     DefectUpdateView,
     DefectStatusUpdateView,
     AttachmentUploadView,
+    DefectAssignView,
+    DefectDeleteView,
 )
 
 urlpatterns = [
@@ -15,4 +17,6 @@ urlpatterns = [
     path("<int:pk>/edit/", DefectUpdateView.as_view(), name="defect_edit"),
     path("<int:pk>/change_status/", DefectStatusUpdateView.as_view(), name="defect_change_status"),
     path("<int:pk>/attachments/", AttachmentUploadView.as_view(), name="defect_upload_attachments"),
+    path("<int:pk>/assign/", DefectAssignView.as_view(), name="defect_assign"),
+    path("<int:pk>/delete/", DefectDeleteView.as_view(), name="defect_delete"),
 ]

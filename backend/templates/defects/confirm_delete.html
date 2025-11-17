@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Удалить дефект{% endblock %}
+{% block content %}
+<div class="container mt-4">
+  <h3>Удалить дефект</h3>
+  <div class="alert alert-warning">Вы уверены, что хотите удалить дефект "{{ object.title }}"? Действие необратимо.</div>
+  <form method="post">
+    {% csrf_token %}
+    <button class="btn btn-danger" type="submit">Удалить</button>
+    <a class="btn btn-outline-secondary" href="/defects/{{ object.id }}/">Отмена</a>
+  </form>
+</div>
+{% endblock %}

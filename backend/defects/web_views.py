@@ -1,10 +1,10 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.generic import ListView, DetailView, CreateView, UpdateView, FormView
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, FormView, DeleteView
 from django.urls import reverse_lazy
 from django.shortcuts import redirect
 from django.db.models import Q
 from .models import Defect, Attachment, Comment
-from .forms import DefectForm, DefectStatusForm, AttachmentForm, CommentForm
+from .forms import DefectForm, DefectStatusForm, AttachmentForm, CommentForm, AssignPerformerForm
 from .services import change_status
 
 class RoleMixin:
@@ -86,6 +86,14 @@ class DefectCreateView(LoginRequiredMixin, RoleMixin, CreateView):
                 form.fields[f].disabled = True
         return form
 
+    def form_valid(self, form):
+        self.object = form.save()
+        file = self.request.FILES.get("attachments")
+        if file:
+            Attachment.objects.create(defect=self.object, file=file)
+        from django.shortcuts import redirect
+        return redirect(self.get_success_url())
+
 class DefectUpdateView(LoginRequiredMixin, RoleMixin, UpdateView):
     model = Defect
     form_class = DefectForm
@@ -109,6 +117,14 @@ class DefectUpdateView(LoginRequiredMixin, RoleMixin, UpdateView):
         if self.user_is_engineer():
             form.fields.pop("performer", None)
         return form
+
+    def form_valid(self, form):
+        self.object = form.save()
+        file = self.request.FILES.get("attachments")
+        if file:
+            Attachment.objects.create(defect=self.object, file=file)
+        from django.shortcuts import redirect
+        return redirect(self.get_success_url())
 
 class DefectStatusUpdateView(LoginRequiredMixin, RoleMixin, FormView):
     template_name = "defects/change_status.html"
@@ -136,3 +152,40 @@ class AttachmentUploadView(LoginRequiredMixin, RoleMixin, FormView):
         defect = Defect.objects.get(pk=self.kwargs.get("pk"))
         Attachment.objects.create(defect=defect, file=form.cleaned_data["file"])
         return super().form_valid(form)
+
+class DefectAssignView(LoginRequiredMixin, RoleMixin, FormView):
+    template_name = "defects/assign.html"
+    form_class = AssignPerformerForm
+
+    def dispatch(self, request, *args, **kwargs):
+        if not self.user_is_manager():
+            from django.http import HttpResponseForbidden
+            return HttpResponseForbidden()
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        defect = Defect.objects.get(pk=self.kwargs.get("pk"))
+        qs = defect.project.members.filter(role="engineer")
+        form.fields["performer"].queryset = qs
+        return form
+
+    def form_valid(self, form):
+        defect = Defect.objects.get(pk=self.kwargs.get("pk"))
+        defect.performer = form.cleaned_data["performer"]
+        defect.save(update_fields=["performer", "updated_at"])
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy("defect_detail", kwargs={"pk": self.kwargs.get("pk")})
+
+class DefectDeleteView(LoginRequiredMixin, RoleMixin, DeleteView):
+    model = Defect
+    template_name = "defects/confirm_delete.html"
+    success_url = reverse_lazy("defects_list")
+
+    def dispatch(self, request, *args, **kwargs):
+        if not self.user_is_manager():
+            from django.http import HttpResponseForbidden
+            return HttpResponseForbidden()
+        return super().dispatch(request, *args, **kwargs)
