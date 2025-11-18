@@ -22,11 +22,18 @@
     <canvas id="priorityChart" height="140"></canvas>
   </div>
 </div>
+{{ status_labels|json_script:"status-labels" }}
+{{ status_counts|json_script:"status-counts" }}
+{{ priority_labels|json_script:"priority-labels" }}
+{{ priority_counts|json_script:"priority-counts" }}
+{{ daily_labels|json_script:"daily-labels" }}
+{{ daily_projects|json_script:"daily-projects" }}
+{{ daily_defects|json_script:"daily-defects" }}
 <script>
-const statusLabels = {{ status_labels|safe }};
-const statusData = {{ status_counts|safe }};
-const priorityLabels = {{ priority_labels|safe }};
-const priorityData = {{ priority_counts|safe }};
+const statusLabels = JSON.parse(document.getElementById('status-labels').textContent);
+const statusData = JSON.parse(document.getElementById('status-counts').textContent);
+const priorityLabels = JSON.parse(document.getElementById('priority-labels').textContent);
+const priorityData = JSON.parse(document.getElementById('priority-counts').textContent);
 const orange = '#ff8a2f';
 const orangeBg = 'rgba(255,138,47,0.25)';
 const orangeBgHover = 'rgba(255,138,47,0.45)';
@@ -36,9 +43,9 @@ function makeBar(ctx, labels, data){
 makeBar(document.getElementById('statusChart'), statusLabels, statusData);
 makeBar(document.getElementById('priorityChart'), priorityLabels, priorityData);
 
-const dailyLabels = {{ daily_labels|safe }};
-const dailyProjects = {{ daily_projects|safe }};
-const dailyDefects = {{ daily_defects|safe }};
+const dailyLabels = JSON.parse(document.getElementById('daily-labels').textContent);
+const dailyProjects = JSON.parse(document.getElementById('daily-projects').textContent);
+const dailyDefects = JSON.parse(document.getElementById('daily-defects').textContent);
 function makeLegendIcon(color){
   const c = document.createElement('canvas');
   c.width = 14; c.height = 14;

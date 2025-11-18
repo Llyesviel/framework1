@@ -33,11 +33,12 @@
       <a class="button button-gray" href="/defects/{{ view.kwargs.pk }}/"><span class="text">Отмена</span></a>
     </div>
   </form>
+  {{ engineers|json_script:"engineers-data" }}
 <script>
   (function(){
     var input = document.querySelector('input[name="username"]');
     var list = document.getElementById('ac-list');
-    var data = {{ engineers|safe }};
+    var data = JSON.parse(document.getElementById('engineers-data').textContent);
     var activeIndex = -1;
     function render(matches){
       list.innerHTML='';
