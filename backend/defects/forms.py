@@ -6,10 +6,9 @@ from django.contrib.auth import get_user_model
 class DefectForm(forms.ModelForm):
     class Meta:
         model = Defect
-        fields = ["project", "stage", "title", "description", "priority", "status", "performer", "deadline"]
+        fields = ["project", "title", "description", "priority", "status", "performer", "deadline"]
         widgets = {
             "project": forms.Select(attrs={"class": "form-select"}),
-            "stage": forms.Select(attrs={"class": "form-select"}),
             "title": forms.TextInput(attrs={"class": "form-control"}),
             "description": forms.Textarea(attrs={"class": "form-control"}),
             "priority": forms.Select(attrs={"class": "form-select"}),
@@ -19,7 +18,6 @@ class DefectForm(forms.ModelForm):
         }
         labels = {
             "project": "Проект",
-            "stage": "Этап",
             "title": "Название",
             "description": "Описание",
             "priority": "Приоритет",
@@ -57,4 +55,4 @@ class CommentForm(forms.ModelForm):
         labels = {"text": "Комментарий"}
 
 class AssignPerformerForm(forms.Form):
-    performer = forms.ModelChoiceField(queryset=get_user_model().objects.none(), label="Инженер", widget=forms.Select(attrs={"class": "form-select"}))
+    username = forms.CharField(label="Логин инженера", widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "Введите логин инженера"}))

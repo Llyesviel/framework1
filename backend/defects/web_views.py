@@ -93,6 +93,28 @@ class DefectDetailView(LoginRequiredMixin, RoleMixin, DetailView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx["comment_form"] = CommentForm()
+        try:
+            if self.user_is_engineer() and ctx.get("defect") and ctx["defect"].performer_id == self.request.user.id:
+                hs = ctx["defect"].status_history.filter(changed_by=self.request.user).order_by("-changed_at")
+                def label(h):
+                    if h.old_status == Defect.STATUS_NEW and h.new_status == Defect.STATUS_IN_PROGRESS:
+                        return "Дефект принят"
+                    if h.old_status == Defect.STATUS_IN_PROGRESS and h.new_status == Defect.STATUS_REVIEW:
+                        return "Дефект отправлен"
+                    return None
+                actions = []
+                for h in hs:
+                    t = label(h)
+                    if t:
+                        actions.append({
+                            "time": timezone.localtime(h.changed_at).strftime("%H:%M"),
+                            "text": t,
+                        })
+                ctx["engineer_actions"] = actions
+            else:
+                ctx["engineer_actions"] = []
+        except Exception:
+            ctx["engineer_actions"] = []
         return ctx
 
 class DefectCreateView(LoginRequiredMixin, RoleMixin, CreateView):
@@ -144,17 +166,16 @@ class DefectUpdateView(LoginRequiredMixin, RoleMixin, UpdateView):
         if self.user_is_manager():
             return super().dispatch(request, *args, **kwargs)
         if self.user_is_engineer():
-            if defect.performer_id != request.user.id:
-                from django.http import HttpResponseForbidden
-                return HttpResponseForbidden()
-            return super().dispatch(request, *args, **kwargs)
+            from django.http import HttpResponseForbidden
+            return HttpResponseForbidden()
         from django.http import HttpResponseForbidden
         return HttpResponseForbidden()
 
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
         if self.user_is_engineer():
-            form.fields.pop("performer", None)
+            for f in list(form.fields.keys()):
+                form.fields[f].disabled = True
         return form
 
     def form_valid(self, form):
@@ -177,6 +198,12 @@ class DefectUpdateView(LoginRequiredMixin, RoleMixin, UpdateView):
 class DefectStatusUpdateView(LoginRequiredMixin, RoleMixin, FormView):
     template_name = "defects/change_status.html"
     form_class = DefectStatusForm
+
+    def dispatch(self, request, *args, **kwargs):
+        if not self.user_is_manager():
+            from django.http import HttpResponseForbidden
+            return HttpResponseForbidden()
+        return super().dispatch(request, *args, **kwargs)
 
     def get_success_url(self):
         return reverse_lazy("defect_detail", kwargs={"pk": self.kwargs.get("pk")})
@@ -212,21 +239,27 @@ class DefectAssignView(LoginRequiredMixin, RoleMixin, FormView):
         return super().dispatch(request, *args, **kwargs)
 
     def get_form(self, form_class=None):
-        form = super().get_form(form_class)
-        defect = Defect.objects.get(pk=self.kwargs.get("pk"))
-        User = get_user_model()
-        qs = User.objects.filter(role="engineer", is_active=True)
-        q = self.request.GET.get("q")
-        if q:
-            qs = qs.filter(username__icontains=q)
-        form.fields["performer"].queryset = qs
-        return form
+        return super().get_form(form_class)
 
     def form_valid(self, form):
         defect = Defect.objects.get(pk=self.kwargs.get("pk"))
-        defect.performer = form.cleaned_data["performer"]
+        username = form.cleaned_data["username"].strip()
+        User = get_user_model()
+        try:
+            performer = User.objects.get(username__iexact=username, role="engineer", is_active=True)
+        except User.DoesNotExist:
+            form.add_error("username", "Инженер с таким логином не найден")
+            return self.form_invalid(form)
+        defect.performer = performer
         defect.save(update_fields=["performer", "updated_at"])
         return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        User = get_user_model()
+        engineers = list(User.objects.filter(role="engineer", is_active=True).values_list("username", flat=True))
+        ctx["engineers"] = engineers
+        return ctx
 
     def get_success_url(self):
         return reverse_lazy("defect_detail", kwargs={"pk": self.kwargs.get("pk")})

@@ -24,8 +24,10 @@
   /* Stages table */
   .stages-head { display:flex; align-items:center; justify-content:space-between; margin-top:8px; }
   .stages-table { width:100%; margin-top:10px; border-collapse:collapse; }
-  .stages-table th, .stages-table td { padding:10px 8px; border-bottom:1px solid #f0f0f0; }
+  .stages-table th, .stages-table td { padding:10px 8px; border-bottom:1px solid #f0f0f0; vertical-align: top; }
   .stages-table th { color:#555f6d; font-weight:600; }
+  .stages-table { table-layout: fixed; }
+  .stages-table td.address, .stages-table th.address { word-break: break-word; overflow-wrap: anywhere; }
 </style>
 <div class="detail-wrap">
   <div class="detail-head">
@@ -70,6 +72,52 @@
         </tr>
         {% empty %}
         <tr><td colspan="3" class="muted">Нет этапов</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <div class="stages-head" style="margin-top:16px;">
+      <h5 style="margin:0;">Объекты</h5>
+      {% if user.is_manager %}
+        <a class="action-btn action-orange" href="/projects/{{ project.id }}/objects/create/" title="Добавить объект"><span class="text">Добавить объект</span></a>
+      {% endif %}
+    </div>
+    <table class="stages-table">
+      <thead><tr><th>Название</th><th>Тип</th><th>Адрес</th><th>Описание</th><th></th></tr></thead>
+      <tbody>
+        {% for o in project.build_objects.all %}
+        <tr>
+          <td>{{ o.title }}</td>
+          <td class="muted">{{ o.type|default:"" }}</td>
+          <td class="muted address">{{ o.address|default:"" }}</td>
+          <td class="muted">{{ o.description|default:"" }}</td>
+          <td style="text-align:right;">
+            {% if user.is_manager %}
+              <a class="action-btn action-gray" href="/projects/objects/{{ o.id }}/edit/" title="Редактировать"><span class="text">Редактировать</span></a>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="muted">Нет объектов</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <div class="stages-head" style="margin-top:16px;">
+      <h5 style="margin:0;">Дефекты проекта</h5>
+    </div>
+    <table class="stages-table">
+      <thead><tr><th>Название</th><th>Статус</th><th>Приоритет</th><th>Исполнитель</th><th>Срок</th><th></th></tr></thead>
+      <tbody>
+        {% for d in project.defects.all %}
+        <tr>
+          <td>{{ d.title }}</td>
+          <td class="muted">{{ d.get_status_display }}</td>
+          <td class="muted">{{ d.get_priority_display }}</td>
+          <td class="muted">{% if d.performer %}{{ d.performer.username }}{% else %}—{% endif %}</td>
+          <td class="muted">{{ d.deadline|default:"не задано" }}</td>
+          <td style="text-align:right;"><a class="action-btn action-orange" href="/defects/{{ d.id }}/"><span class="text">Открыть</span></a></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="muted">Нет дефектов</td></tr>
         {% endfor %}
       </tbody>
     </table>

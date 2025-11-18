@@ -18,6 +18,8 @@
   .action-btn .text { margin: 0; font-weight:500; }
   .action-orange { --c: #ff8a2f; }
   .action-gray { --c: #8a9096; }
+  .form-control:focus { outline:none; border-color: rgba(247,127,0,0.55); box-shadow: 0 0 0 4px rgba(247,127,0,0.14); }
+  .action-green { --c: #26b07d; opacity:.85; }
 </style>
 <div class="detail-wrap">
   <div class="detail-head">
@@ -32,13 +34,18 @@
           <a class="action-btn action-gray" href="/defects/{{ defect.id }}/assign/"><span class="text">Назначить инженера</span></a>
           <a class="action-btn action-gray" href="/defects/{{ defect.id }}/delete/"><span class="text">Удалить</span></a>
         {% elif user.is_engineer and defect.performer_id == user.id %}
-          <form method="post" action="/defects/{{ defect.id }}/accept/" style="display:inline;">
-            {% csrf_token %}
-            <button class="action-btn action-orange" type="submit"><span class="text">Принять в работу</span></button>
-          </form>
-          <a class="action-btn action-gray" href="/defects/{{ defect.id }}/edit/"><span class="text">Редактировать</span></a>
+          {% if defect.status == 'new' %}
+            <form method="post" action="/defects/{{ defect.id }}/accept/" style="display:inline;">
+              {% csrf_token %}
+              <button class="action-btn action-orange" type="submit"><span class="text">Принять в работу</span></button>
+            </form>
+          {% elif defect.status == 'in_progress' %}
+            <span class="action-btn action-green" style="pointer-events:none;"><span class="text">Принят</span></span>
+          {% endif %}
         {% endif %}
-        {% if not user.is_observer %}
+        {% if user.is_manager %}
+          <a class="action-btn action-orange" href="/defects/{{ defect.id }}/attachments/"><span class="text">Вложения</span></a>
+        {% elif user.is_engineer and defect.performer_id == user.id and defect.status == 'in_progress' %}
           <a class="action-btn action-orange" href="/defects/{{ defect.id }}/attachments/"><span class="text">Вложения</span></a>
         {% endif %}
       {% endif %}
@@ -46,20 +53,31 @@
     <table class="info-table">
       <tr><th>Проект</th><td>{{ defect.project.title }}</td></tr>
       <tr><th>Этап</th><td class="muted">{% if defect.stage %}{{ defect.stage.title }}{% endif %}</td></tr>
-      <tr><th>Статус</th><td class="muted">{{ defect.get_status_display }}</td></tr>
+      <tr><th>Статус</th><td class="muted">{{ defect.get_status_display }}{% if defect.status == 'in_progress' and defect.performer %} — принят инженером{% endif %}</td></tr>
       <tr><th>Приоритет</th><td class="muted">{{ defect.get_priority_display }}</td></tr>
       <tr><th>Исполнитель</th><td class="muted">{% if defect.performer %}{{ defect.performer.username }}{% endif %}</td></tr>
       <tr><th>Срок</th><td class="muted">{{ defect.deadline|default:"не задано" }}</td></tr>
       <tr><th>Описание</th><td class="muted">{{ defect.description }}</td></tr>
     </table>
-    <h5 style="margin:16px 0 6px; color:#555f6d;">История статусов</h5>
-    <ul style="list-style:none; padding:0; margin:0;">
-      {% for h in defect.status_history.all %}
-        <li style="padding:8px 0; border-bottom:1px solid #f0f0f0;">{{ h.changed_at|localtime }}: {{ h.old_status }} → {{ h.new_status }} {% if h.changed_by %}({{ h.changed_by.username }}){% endif %}</li>
-      {% empty %}
-        <li class="muted">Нет истории</li>
-      {% endfor %}
-    </ul>
+    {% if user.is_engineer and defect.performer_id == user.id %}
+      <h5 style="margin:16px 0 6px; color:#555f6d;">Мои действия</h5>
+      <ul style="list-style:none; padding:0; margin:0;">
+        {% for a in engineer_actions %}
+          <li style="padding:8px 0; border-bottom:1px solid #f0f0f0;">{{ a.time }} — {{ a.text }}</li>
+        {% empty %}
+          <li class="muted">Нет действий</li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <h5 style="margin:16px 0 6px; color:#555f6d;">История статусов</h5>
+      <ul style="list-style:none; padding:0; margin:0;">
+        {% for h in defect.status_history.all %}
+          <li style="padding:8px 0; border-bottom:1px solid #f0f0f0;">{{ h.changed_at|localtime }}: {{ h.old_status }} → {{ h.new_status }} {% if h.changed_by %}({{ h.changed_by.username }}){% endif %}</li>
+        {% empty %}
+          <li class="muted">Нет истории</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
     <h5 style="margin:16px 0 6px; color:#555f6d;">Комментарии</h5>
     <ul style="list-style:none; padding:0; margin:0;">
       {% for c in defect.comments.all %}
@@ -68,19 +86,21 @@
         <li class="muted">Нет комментариев</li>
       {% endfor %}
     </ul>
-    {% if not user.is_observer %}
-    <form method="post" class="mt-3">
-      {% csrf_token %}
-      {{ comment_form.as_p }}
-      <button class="action-btn action-orange" type="submit"><span class="text">Добавить комментарий</span></button>
-    </form>
-    {% if user.is_engineer and defect.performer_id == user.id and defect.status == 'in_progress' %}
-    <form method="post" action="/defects/{{ defect.id }}/submit_report/" class="mt-3">
-      {% csrf_token %}
-      {{ comment_form.as_p }}
-      <button class="action-btn action-gray" type="submit"><span class="text">Отправить отчёт на проверку</span></button>
-    </form>
-    {% endif %}
+    {% if user.is_manager %}
+      <form method="post" class="mt-3">
+        {% csrf_token %}
+        {{ comment_form.as_p }}
+        <button class="action-btn action-orange" type="submit"><span class="text">Добавить комментарий</span></button>
+      </form>
+    {% elif user.is_engineer and defect.performer_id == user.id and defect.status == 'in_progress' %}
+      <form method="post" class="mt-3">
+        {% csrf_token %}
+        {{ comment_form.as_p }}
+        <div class="actions" style="margin-top:8px;">
+          <button class="action-btn action-orange" type="submit"><span class="text">Добавить комментарий</span></button>
+          <button class="action-btn action-gray" type="submit" formaction="/defects/{{ defect.id }}/submit_report/"><span class="text">Отправить отчёт на проверку</span></button>
+        </div>
+      </form>
     {% endif %}
     <h5 style="margin:16px 0 6px; color:#555f6d;">Вложения</h5>
     <div class="row">

@@ -39,11 +39,22 @@ makeBar(document.getElementById('priorityChart'), priorityLabels, priorityData);
 const dailyLabels = {{ daily_labels|safe }};
 const dailyProjects = {{ daily_projects|safe }};
 const dailyDefects = {{ daily_defects|safe }};
+function makeLegendIcon(color){
+  const c = document.createElement('canvas');
+  c.width = 14; c.height = 14;
+  const ctx = c.getContext('2d');
+  const cx = 7, cy = 7;
+  ctx.strokeStyle = color; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(cx, cy, 5, 0, Math.PI*2); ctx.stroke();
+  ctx.fillStyle = color;
+  ctx.beginPath(); ctx.arc(cx, cy, 2, 0, Math.PI*2); ctx.fill();
+  return c;
+}
 new Chart(document.getElementById('dailyChart'), {
   type:'line',
   data:{ labels: dailyLabels, datasets:[
-    { label:'Создано проектов', data: dailyProjects, borderColor: orange, backgroundColor: 'transparent', tension: 0.2, cubicInterpolationMode:'monotone', pointRadius: 0, pointHoverRadius: 4, pointStyle:'circle', borderWidth: 2, fill:false },
-    { label:'Создано дефектов', data: dailyDefects, borderColor: '#26b07d', backgroundColor: 'transparent', tension: 0.2, cubicInterpolationMode:'monotone', pointRadius: 0, pointHoverRadius: 4, pointStyle:'circle', borderWidth: 2, fill:false },
+    { label:'Создано проектов', data: dailyProjects, borderColor: orange, backgroundColor: 'transparent', tension: 0.2, cubicInterpolationMode:'monotone', pointRadius: 0, pointHoverRadius: 4, pointStyle: makeLegendIcon(orange), borderWidth: 2, fill:false },
+    { label:'Создано дефектов', data: dailyDefects, borderColor: '#26b07d', backgroundColor: 'transparent', tension: 0.2, cubicInterpolationMode:'monotone', pointRadius: 0, pointHoverRadius: 4, pointStyle: makeLegendIcon('#26b07d'), borderWidth: 2, fill:false },
   ]},
   options:{
     plugins:{ legend:{ display:true, labels:{ usePointStyle:true, boxWidth:8 } }, tooltip:{ mode:'index', intersect:false, callbacks:{ label:function(ctx){ return ctx.dataset.label+': '+ctx.parsed.y; } } } },

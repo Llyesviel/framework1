@@ -306,6 +306,17 @@ class BuildObjectCreateView(ManagerRequiredMixin, CreateView):
 
     def get_success_url(self):
         return reverse_lazy("project_detail", kwargs={"pk": self.kwargs.get("pk")})
+class BuildObjectUpdateView(ManagerRequiredMixin, UpdateView):
+    model = BuildObject
+    form_class = BuildObjectForm
+    template_name = "projects/object_create.html"
+
+    def get_success_url(self):
+        return reverse_lazy("project_detail", kwargs={"pk": self.object.project_id})
+    
+    def form_valid(self, form):
+        messages.success(self.request, "Объект успешно сохранён")
+        return super().form_valid(form)
 class ProjectsExportCSVView(LoginRequiredMixin, View):
     def get(self, request):
         qs = Project.objects.annotate(defects_count=Count("defects"))

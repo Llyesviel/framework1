@@ -5,31 +5,72 @@
 <style>
   .form-wrap { max-width: 720px; margin: 24px 48px; background:#fff; border-radius:16px; box-shadow:0 10px 20px rgba(0,0,0,0.08); padding:24px; }
   .form-wrap h3 { margin:0 0 16px; color:#ff8a2f; font-weight:700; }
-  .search { display:flex; gap:8px; margin-bottom:12px; }
-  .search input { border:1px solid #ddd; border-radius:10px; padding:10px 12px; width:100%; }
-  .search button { background-color: transparent; color: #ff8a2f; height: 2.4em; border: 1px solid #ff8a2f; border-radius: 10px; transition: all 0.4s ease; padding: 0 1rem; }
-  .search button:hover { background-color: #ff8a2f; color:#fff; border-radius: 8px; }
-  select { border:1px solid #ddd; border-radius:10px; padding:10px 12px; width:100%; }
-  select:focus { outline:none !important; border-color: rgba(247,127,0,0.55) !important; box-shadow: 0 0 0 4px rgba(247,127,0,0.14) !important; }
+  .search { display:none; }
+  input { border:1px solid #ddd; border-radius:10px; padding:10px 12px; width:100%; }
+  input:focus { outline:none !important; border-color: rgba(247,127,0,0.55) !important; box-shadow: 0 0 0 4px rgba(247,127,0,0.14) !important; }
   .button { background-color: transparent; color: #ff8a2f; height: 2.4em; border: 1px solid #ff8a2f; border-radius: 10px; transition: all 0.4s ease; display:inline-flex; align-items:center; gap:8px; padding: 0 1rem; }
   .button:hover { background-color: #ff8a2f; cursor: pointer; color:#fff; border-radius: 8px; }
   .button-gray { color:#8a9096; border-color:#8a9096; }
   .button-gray:hover { background-color:#8a9096; color:#fff; }
   .text { margin: 0; font-weight:600; }
+  .ac-wrap { position: relative; }
+  .ac-list { position: absolute; top: calc(100% + 6px); left: 0; right: 0; background:#fff7f0; border:1px solid #ff8a2f; border-radius:10px; box-shadow:0 8px 16px rgba(0,0,0,0.08); padding:6px 0; z-index:10; max-height:200px; overflow:auto; display:none; }
+  .ac-item { padding:8px 12px; color:#555f6d; cursor:pointer; }
+  .ac-item + .ac-item { border-top:1px solid rgba(255,138,47,0.35); }
+  .ac-item:hover, .ac-item.active { background:#ffead6; }
 </style>
 <div class="form-wrap">
   <h3>Назначить инженера</h3>
-  <form method="get" class="search">
-    <input type="text" name="q" value="{{ request.GET.q }}" placeholder="Поиск инженера по логину">
-    <button type="submit">Поиск</button>
-  </form>
   <form method="post" novalidate>
     {% csrf_token %}
-    {{ form.as_p }}
+    <div class="mb-3 ac-wrap">
+      <label class="form-label">Логин инженера</label>
+      <input name="username" class="form-control" placeholder="Начните вводить логин" autocomplete="off" required>
+      <ul class="ac-list" id="ac-list"></ul>
+    </div>
     <div style="display:flex; gap:8px;">
       <button class="button" type="submit"><span class="text">Сохранить</span></button>
       <a class="button button-gray" href="/defects/{{ view.kwargs.pk }}/"><span class="text">Отмена</span></a>
     </div>
   </form>
+<script>
+  (function(){
+    var input = document.querySelector('input[name="username"]');
+    var list = document.getElementById('ac-list');
+    var data = {{ engineers|safe }};
+    var activeIndex = -1;
+    function render(matches){
+      list.innerHTML='';
+      matches.forEach(function(v,i){
+        var li=document.createElement('li');
+        li.className='ac-item'+(i===activeIndex?' active':'');
+        li.textContent=v;
+        li.addEventListener('mousedown', function(){ input.value=v; hide(); });
+        list.appendChild(li);
+      });
+      list.style.display = matches.length ? 'block' : 'none';
+    }
+    function hide(){ list.style.display='none'; activeIndex=-1; }
+    input.addEventListener('input', function(){
+      var q=this.value.toLowerCase();
+      var m = data.filter(function(v){ return v.toLowerCase().indexOf(q) !== -1; }).slice(0,10);
+      activeIndex=-1; render(m);
+    });
+    input.addEventListener('keydown', function(e){
+      var items=list.querySelectorAll('.ac-item');
+      if(!items.length) return;
+      if(e.key==='ArrowDown'){ e.preventDefault(); activeIndex=Math.min(activeIndex+1, items.length-1); render(Array.from(items).map(function(x){return x.textContent;})); }
+      else if(e.key==='ArrowUp'){ e.preventDefault(); activeIndex=Math.max(activeIndex-1, 0); render(Array.from(items).map(function(x){return x.textContent;})); }
+      else if(e.key==='Enter'){ if(activeIndex>=0){ e.preventDefault(); input.value=items[activeIndex].textContent; hide(); } }
+      else if(e.key==='Escape'){ hide(); }
+    });
+    document.addEventListener('click', function(e){ if(!list.contains(e.target) && e.target!==input) hide(); });
+    document.querySelector('form[method="post"]').addEventListener('submit', function(e){
+      var val = input.value.toLowerCase();
+      var ok = data.some(function(v){ return v.toLowerCase()===val; });
+      if(!ok){ e.preventDefault(); alert('Выберите инженера из списка предложений'); }
+    });
+  })();
+</script>
 </div>
 {% endblock %}
