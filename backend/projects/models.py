@@ -13,7 +13,7 @@ class Project(models.Model):
     description = models.TextField(blank=True)
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_ACTIVE)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_ACTIVE, db_index=True)
     members = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name="projects", blank=True)
 
     def __str__(self):

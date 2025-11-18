@@ -3,6 +3,8 @@ from django.contrib.auth import get_user_model
 from projects.models import Project, Stage
 from defects.models import Defect
 from defects.services import change_status
+from django.test import Client
+from rest_framework.test import APIClient
 
 User = get_user_model()
 
@@ -53,3 +55,75 @@ def test_filter_defects_by_status():
     Defect.objects.create(project=p, stage=s, title="D1", status=Defect.STATUS_NEW)
     Defect.objects.create(project=p, stage=s, title="D2", status=Defect.STATUS_CANCELLED)
     assert Defect.objects.filter(status=Defect.STATUS_NEW).count() == 1
+
+@pytest.mark.django_db
+def test_web_engineer_cannot_edit_defect():
+    e = User.objects.create_user(username="e", email="e@example.com", password="x", role="engineer")
+    p = Project.objects.create(title="P")
+    p.members.add(e)
+    s = Stage.objects.create(project=p, title="S")
+    d = Defect.objects.create(project=p, stage=s, title="D")
+    client = Client()
+    client.login(username="e", password="x")
+    resp = client.get(f"/defects/{d.id}/edit/")
+    assert resp.status_code == 403
+
+@pytest.mark.django_db
+def test_web_manager_can_edit_defect():
+    m = User.objects.create_user(username="m", email="m@example.com", password="x", role="manager")
+    p = Project.objects.create(title="P")
+    s = Stage.objects.create(project=p, title="S")
+    d = Defect.objects.create(project=p, stage=s, title="D")
+    client = Client()
+    client.login(username="m", password="x")
+    resp = client.get(f"/defects/{d.id}/edit/")
+    assert resp.status_code == 200
+
+@pytest.mark.django_db
+def test_web_defect_assign_invalid_username_error():
+    m = User.objects.create_user(username="m", email="m@example.com", password="x", role="manager")
+    p = Project.objects.create(title="P")
+    s = Stage.objects.create(project=p, title="S")
+    d = Defect.objects.create(project=p, stage=s, title="D")
+    client = Client()
+    client.login(username="m", password="x")
+    resp = client.post(f"/defects/{d.id}/assign/", {"username": "unknown"})
+    assert resp.status_code == 200
+    assert "username" in resp.context.get("form").errors
+
+@pytest.mark.django_db
+def test_api_defects_list_manager_ok():
+    m = User.objects.create_user(username="m", email="m@example.com", password="x", role="manager")
+    p = Project.objects.create(title="P")
+    s = Stage.objects.create(project=p, title="S")
+    Defect.objects.create(project=p, stage=s, title="D1")
+    client = APIClient()
+    client.force_authenticate(user=m)
+    resp = client.get("/api/defects/")
+    assert resp.status_code == 200
+    assert isinstance(resp.data, list)
+    assert len(resp.data) == 1
+
+@pytest.mark.django_db
+def test_api_change_status_invalid_transition_400():
+    m = User.objects.create_user(username="m", email="m@example.com", password="x", role="manager")
+    p = Project.objects.create(title="P")
+    s = Stage.objects.create(project=p, title="S")
+    d = Defect.objects.create(project=p, stage=s, title="D")
+    client = APIClient()
+    client.force_authenticate(user=m)
+    resp = client.post(f"/api/defects/{d.id}/change_status/", {"status": Defect.STATUS_CLOSED}, format="json")
+    assert resp.status_code == 400
+    assert "Недопустимый переход статуса" in resp.data.get("detail", "")
+
+@pytest.mark.django_db
+def test_api_comments_post_requires_text_400():
+    m = User.objects.create_user(username="m", email="m@example.com", password="x", role="manager")
+    p = Project.objects.create(title="P")
+    s = Stage.objects.create(project=p, title="S")
+    d = Defect.objects.create(project=p, stage=s, title="D")
+    client = APIClient()
+    client.force_authenticate(user=m)
+    resp = client.post(f"/api/defects/{d.id}/comments/", {}, format="json")
+    assert resp.status_code == 400
+    assert resp.data.get("detail") == "text required"
