@@ -52,11 +52,14 @@
         <div class="row"><div class="label">Имя</div><div class="value-box">{{ user.first_name|default:"не указано" }}</div></div>
         <div class="row"><div class="label">Фамилия</div><div class="value-box">{{ user.last_name|default:"не указана" }}</div></div>
         <div class="row"><div class="label">Дата регистрации</div><div class="value-box">{{ user.date_joined|date:"d.m.Y"|default:"нет" }}</div></div>
+        {% if is_other and request.user.is_manager %}
+        <div class="row"><div class="label">Пароль</div><div class="value-box"><a class="btn" href="/users/{{ user.id }}/set_password/">Сменить пароль</a></div></div>
+        {% endif %}
       {% endif %}
     </div>
     <div class="actions">
       <a class="btn" href="/profile/edit/">Редактировать</a>
-      <a class="btn" href="/change_password/">Сменить пароль</a>
+      <a class="btn" href="/users/{% if is_other and request.user.is_manager %}{{ user.id }}{% else %}{{ request.user.id }}{% endif %}/set_password/">Сменить пароль</a>
       <a class="btn btn-gray" href="/logout/">Выход</a>
     </div>
   </div>

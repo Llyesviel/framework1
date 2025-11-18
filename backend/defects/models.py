@@ -46,8 +46,8 @@ class Defect(models.Model):
                 performer = User.objects.get(id=self.performer_id)
             except User.DoesNotExist:
                 performer = None
-            if performer and performer.is_observer:
-                raise ValueError("Нельзя назначить наблюдателя исполнителем")
+            if performer and (not performer.is_engineer):
+                raise ValueError("Назначать исполнителем можно только инженера")
         super().save(*args, **kwargs)
 
 class Attachment(models.Model):

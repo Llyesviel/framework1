@@ -26,9 +26,10 @@ from django.views.generic import ListView
 from django.contrib.auth import get_user_model
 from django.http import HttpResponseForbidden
 from django.views.generic.edit import FormView, UpdateView
-from django.contrib.auth.forms import PasswordChangeForm
+from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth import update_session_auth_hash
 from django.views import View
+from django.contrib.auth.forms import SetPasswordForm
 
 class UsersListView(LoginRequiredMixin, ListView):
     model = get_user_model()
@@ -45,7 +46,7 @@ class RestoreView(TemplateView):
 
 class ChangePasswordView(LoginRequiredMixin, FormView):
     template_name = "users/change_password.html"
-    form_class = PasswordChangeForm
+    form_class = SetPasswordForm
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -114,3 +115,34 @@ class UserEditView(LoginRequiredMixin, UpdateView):
         from django.urls import reverse_lazy
         messages.success(self.request, "Данные пользователя обновлены")
         return reverse_lazy("users_list")
+
+class UserSetPasswordView(LoginRequiredMixin, FormView):
+    template_name = "users/change_password.html"
+    form_class = SetPasswordForm
+
+    def dispatch(self, request, *args, **kwargs):
+        target_id = int(self.kwargs.get("pk"))
+        if not (request.user.is_manager or request.user.id == target_id):
+            return HttpResponseForbidden()
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        target = get_user_model().objects.get(pk=self.kwargs.get("pk"))
+        kwargs["user"] = target
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        target = get_user_model().objects.get(pk=self.kwargs.get("pk"))
+        ctx["form_title"] = f"Сменить пароль — {target.username}"
+        return ctx
+
+    def form_valid(self, form):
+        user = form.user
+        form.save()
+        if user == self.request.user:
+            update_session_auth_hash(self.request, user)
+        messages.success(self.request, "Пароль пользователя изменён")
+        from django.urls import reverse_lazy
+        return redirect(reverse_lazy("user_edit", kwargs={"pk": self.kwargs.get("pk")}))

@@ -32,8 +32,11 @@
           <a class="action-btn action-gray" href="/defects/{{ defect.id }}/assign/"><span class="text">Назначить инженера</span></a>
           <a class="action-btn action-gray" href="/defects/{{ defect.id }}/delete/"><span class="text">Удалить</span></a>
         {% elif user.is_engineer and defect.performer_id == user.id %}
+          <form method="post" action="/defects/{{ defect.id }}/accept/" style="display:inline;">
+            {% csrf_token %}
+            <button class="action-btn action-orange" type="submit"><span class="text">Принять в работу</span></button>
+          </form>
           <a class="action-btn action-gray" href="/defects/{{ defect.id }}/edit/"><span class="text">Редактировать</span></a>
-          <a class="action-btn action-orange" href="/defects/{{ defect.id }}/change_status/"><span class="text">Изменить статус</span></a>
         {% endif %}
         {% if not user.is_observer %}
           <a class="action-btn action-orange" href="/defects/{{ defect.id }}/attachments/"><span class="text">Вложения</span></a>
@@ -71,6 +74,13 @@
       {{ comment_form.as_p }}
       <button class="action-btn action-orange" type="submit"><span class="text">Добавить комментарий</span></button>
     </form>
+    {% if user.is_engineer and defect.performer_id == user.id and defect.status == 'in_progress' %}
+    <form method="post" action="/defects/{{ defect.id }}/submit_report/" class="mt-3">
+      {% csrf_token %}
+      {{ comment_form.as_p }}
+      <button class="action-btn action-gray" type="submit"><span class="text">Отправить отчёт на проверку</span></button>
+    </form>
+    {% endif %}
     {% endif %}
     <h5 style="margin:16px 0 6px; color:#555f6d;">Вложения</h5>
     <div class="row">

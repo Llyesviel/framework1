@@ -5,6 +5,10 @@
 <style>
   .form-wrap { max-width: 720px; margin: 24px 48px; background:#fff; border-radius:16px; box-shadow:0 10px 20px rgba(0,0,0,0.08); padding:24px; }
   .form-wrap h3 { margin:0 0 16px; color:#ff8a2f; font-weight:700; }
+  .search { display:flex; gap:8px; margin-bottom:12px; }
+  .search input { border:1px solid #ddd; border-radius:10px; padding:10px 12px; width:100%; }
+  .search button { background-color: transparent; color: #ff8a2f; height: 2.4em; border: 1px solid #ff8a2f; border-radius: 10px; transition: all 0.4s ease; padding: 0 1rem; }
+  .search button:hover { background-color: #ff8a2f; color:#fff; border-radius: 8px; }
   select { border:1px solid #ddd; border-radius:10px; padding:10px 12px; width:100%; }
   select:focus { outline:none !important; border-color: rgba(247,127,0,0.55) !important; box-shadow: 0 0 0 4px rgba(247,127,0,0.14) !important; }
   .button { background-color: transparent; color: #ff8a2f; height: 2.4em; border: 1px solid #ff8a2f; border-radius: 10px; transition: all 0.4s ease; display:inline-flex; align-items:center; gap:8px; padding: 0 1rem; }
@@ -15,6 +19,10 @@
 </style>
 <div class="form-wrap">
   <h3>Назначить инженера</h3>
+  <form method="get" class="search">
+    <input type="text" name="q" value="{{ request.GET.q }}" placeholder="Поиск инженера по логину">
+    <button type="submit">Поиск</button>
+  </form>
   <form method="post" novalidate>
     {% csrf_token %}
     {{ form.as_p }}

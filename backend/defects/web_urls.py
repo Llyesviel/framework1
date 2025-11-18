@@ -12,6 +12,8 @@ from .web_views import (
     DefectsExportExcelView,
     DefectExportCSVView,
     DefectExportExcelView,
+    DefectAcceptView,
+    DefectSubmitReportView,
 )
 
 urlpatterns = [
@@ -22,6 +24,8 @@ urlpatterns = [
     path("<int:pk>/change_status/", DefectStatusUpdateView.as_view(), name="defect_change_status"),
     path("<int:pk>/attachments/", AttachmentUploadView.as_view(), name="defect_upload_attachments"),
     path("<int:pk>/assign/", DefectAssignView.as_view(), name="defect_assign"),
+    path("<int:pk>/accept/", DefectAcceptView.as_view(), name="defect_accept"),
+    path("<int:pk>/submit_report/", DefectSubmitReportView.as_view(), name="defect_submit_report"),
     path("<int:pk>/delete/", DefectDeleteView.as_view(), name="defect_delete"),
     path("export/csv/", DefectsExportCSVView.as_view(), name="defects_export_csv"),
     path("export/xls/", DefectsExportExcelView.as_view(), name="defects_export_xls"),

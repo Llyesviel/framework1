@@ -13,6 +13,7 @@ from django.db.models import Q
 from .models import Defect, Attachment, Comment
 from .forms import DefectForm, DefectStatusForm, AttachmentForm, CommentForm, AssignPerformerForm
 from .services import change_status
+from django.contrib.auth import get_user_model
 
 class RoleMixin:
     def user_is_manager(self):
@@ -213,7 +214,11 @@ class DefectAssignView(LoginRequiredMixin, RoleMixin, FormView):
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
         defect = Defect.objects.get(pk=self.kwargs.get("pk"))
-        qs = defect.project.members.filter(role="engineer")
+        User = get_user_model()
+        qs = User.objects.filter(role="engineer", is_active=True)
+        q = self.request.GET.get("q")
+        if q:
+            qs = qs.filter(username__icontains=q)
         form.fields["performer"].queryset = qs
         return form
 
@@ -253,6 +258,34 @@ class DefectDeleteView(LoginRequiredMixin, RoleMixin, DeleteView):
         )
         messages.success(request, "Дефект удалён")
         return response
+
+class DefectAcceptView(LoginRequiredMixin, RoleMixin, View):
+    def post(self, request, pk):
+        defect = Defect.objects.get(pk=pk)
+        if not self.user_is_engineer() or defect.performer_id != request.user.id:
+            from django.http import HttpResponseForbidden
+            return HttpResponseForbidden()
+        try:
+            change_status(defect, Defect.STATUS_IN_PROGRESS, request.user)
+        except Exception:
+            pass
+        return redirect("defect_detail", pk=pk)
+
+class DefectSubmitReportView(LoginRequiredMixin, RoleMixin, FormView):
+    form_class = CommentForm
+    template_name = "defects/detail.html"
+
+    def form_valid(self, form):
+        defect = Defect.objects.get(pk=self.kwargs.get("pk"))
+        if not self.user_is_engineer() or defect.performer_id != self.request.user.id:
+            from django.http import HttpResponseForbidden
+            return HttpResponseForbidden()
+        Comment.objects.create(defect=defect, author=self.request.user, text=form.cleaned_data["text"])
+        try:
+            change_status(defect, Defect.STATUS_REVIEW, self.request.user)
+        except Exception:
+            pass
+        return redirect("defect_detail", pk=defect.pk)
 
 class DefectExportMixin(RoleMixin):
     def build_queryset(self, request):
