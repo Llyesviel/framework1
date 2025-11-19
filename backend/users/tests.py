@@ -2,6 +2,8 @@ import pytest
 from django.contrib.auth import get_user_model
 from django.test import Client
 from rest_framework.test import APIClient
+from django.conf import settings
+from django.contrib.auth.hashers import identify_hasher
 
 User = get_user_model()
 
@@ -44,6 +46,14 @@ def test_api_login_returns_tokens():
     assert resp.status_code == 200
     assert "access" in resp.data
     assert "refresh" in resp.data
+
+@pytest.mark.django_db
+def test_password_hash_is_argon2_if_available():
+    if "django.contrib.auth.hashers.Argon2PasswordHasher" not in settings.PASSWORD_HASHERS:
+        pytest.skip("argon2 not configured")
+    u = User.objects.create_user(username="a", email="a@example.com", password="x", role="engineer")
+    h = identify_hasher(u.password)
+    assert h.algorithm.startswith("argon2")
 
 @pytest.mark.django_db
 def test_api_users_list_engineer_forbidden():

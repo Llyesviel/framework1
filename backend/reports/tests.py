@@ -47,3 +47,22 @@ def test_api_reports_export_permission():
     resp_ok = client.get("/api/reports/export/")
     assert resp_forbidden.status_code == 403
     assert resp_ok.status_code == 200
+
+@pytest.mark.django_db
+@pytest.mark.integration
+def test_integration_reports_dashboard_context_keys():
+    m = User.objects.create_user(username="m", email="m@example.com", password="x", role="manager")
+    p = Project.objects.create(title="P")
+    s = Stage.objects.create(project=p, title="S")
+    Defect.objects.create(project=p, stage=s, title="D1")
+    client = Client(); client.login(username="m", password="x")
+    resp = client.get("/reports/dashboard/")
+    assert resp.status_code == 200
+    ctx = resp.context
+    assert isinstance(ctx.get("status_labels"), list)
+    assert isinstance(ctx.get("status_counts"), list)
+    assert isinstance(ctx.get("priority_labels"), list)
+    assert isinstance(ctx.get("priority_counts"), list)
+    assert isinstance(ctx.get("daily_labels"), list)
+    assert isinstance(ctx.get("daily_projects"), list)
+    assert isinstance(ctx.get("daily_defects"), list)
